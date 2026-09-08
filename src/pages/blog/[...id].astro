@@ -1,0 +1,283 @@
+---
+/*
+ * /blog/ 아래 모든 주소를 이 파일이 받는다.
+ *
+ *   /blog/algorithm                      → 카테고리 목록
+ *   /blog/algorithm/binary-search        → 카테고리 목록
+ *   /blog/algorithm/binary-search/1920   → 글
+ *
+ * 주소가 글을 가리키면 글을, 폴더를 가리키면 그 폴더의 목록을 그린다.
+ */
+import BlogCard from "@/components/BlogCard.astro"
+import MetaPage from "@/components/MetaPage.astro"
+import MetaPost from "@/components/MetaPost.astro"
+import PostActions from "@/components/PostActions.astro"
+import ScrollToTop from "@/components/ScrollToTop.astro"
+import TableOfContents from "@/components/TableOfContents.astro"
+import Layout from "@/layouts/Layout.astro"
+import {
+  getPosts, getCategoryTree, categoryLabel,
+  type Post, type CategoryNode,
+} from "@/lib/content"
+import { formatDate } from "@/lib/utils"
+import { Image } from "astro:assets"
+import { render } from "astro:content"
+
+export async function getStaticPaths() {
+  const posts = await getPosts()
+  const { byPath } = await getCategoryTree()
+
+  const postPaths = posts.map((post, i) => ({
+    params: { id: post.id },
+    props: {
+      kind: "post" as const,
+      post,
+      // 목록이 최신순이라 다음 칸이 더 예전 글이다
+      prev: posts[i + 1],
+      next: posts[i - 1],
+    },
+  }))
+
+  // 폴더와 글이 같은 주소를 원하면 글이 이긴다 (주소는 하나뿐이다)
+  const taken = new Set(posts.map((p) => p.id))
+  const categoryPaths = [...byPath.values()]
+    .filter((node) => !taken.has(node.path))
+    .map((node) => ({
+      params: { id: node.path },
+      props: { kind: "category" as const, node },
+    }))
+
+  return [...postPaths, ...categoryPaths]
+}
+
+type Props =
+  | { kind: "post"; post: Post; prev?: Post; next?: Post }
+  | { kind: "category"; node: CategoryNode }
+
+const props = Astro.props as Props
+
+// 템플릿에서 타입이 좁혀지도록 미리 갈라둔다
+const post = props.kind === "post" ? props.post : null
+const node = props.kind === "category" ? props.node : null
+const prev = props.kind === "post" ? props.prev : undefined
+const next = props.kind === "post" ? props.next : undefined
+
+/** "a/b/c" → ["a", "a/b", "a/b/c"] */
+const trail = (path: string) =>
+  path
+    ? path.split("/").map((_, i, all) => all.slice(0, i + 1).join("/"))
+    : []
+
+const rendered = post ? await render(post) : null
+const headings =
+  rendered?.headings.filter(
+    ({ depth, text }) => depth >= 2 && depth <= 4 && text.trim(),
+  ) ?? []
+const Content = rendered?.Content
+
+const categoryCrumbs = (path: string) =>
+  trail(path).map((p) => ({ label: categoryLabel(p), href: `/blog/${p}` }))
+
+const crumbs = post
+  ? [
+      ...categoryCrumbs(post.id.split("/").slice(0, -1).join("/")),
+      { label: post.data.title, href: `/blog/${post.id}` },
+    ]
+  : categoryCrumbs(node!.path)
+---
+
+{
+  post && Content ? (
+    <Layout crumbs={crumbs}>
+      <MetaPost slot="head" post={post} />
+      {headings.length > 0 && (
+        <TableOfContents
+          slot="toc"
+          title={post.data.title}
+          sections={[{ label: post.data.title, headings }]}
+        />
+      )}
+      <PostActions slot="actions" prev={prev} next={next} />
+      <ScrollToTop floating />
+      <article data-url={`/blog/${post.id}`}>
+        <header>
+          <h1>{post.data.title}</h1>
+          <post-meta>
+            <time datetime={post.data.date.toISOString()}>
+              {formatDate(post.data.date)}
+            </time>
+            {post.data.tags && (
+              <post-tags>
+                {post.data.tags.map((tag) => (
+                  <a href={`/tags/${tag}`}>#{tag}</a>
+                ))}
+              </post-tags>
+            )}
+          </post-meta>
+          <p>{post.data.description}</p>
+        </header>
+        {post.data.image && (
+          <post-banner>
+            <Image
+              src={post.data.image}
+              alt={post.data.title}
+              width={1200}
+              height={630}
+              priority
+            />
+          </post-banner>
+        )}
+        <prose-content>
+          <Content />
+        </prose-content>
+      </article>
+    </Layout>
+  ) : (
+    <Layout crumbs={crumbs}>
+      <MetaPage slot="head" title={node!.label} />
+      <ScrollToTop floating />
+      <category-head>
+        <h1>{node!.label}</h1>
+        <p>
+          글 {node!.total}개
+          {node!.children.length > 0 &&
+            ` · 하위 분류 ${node!.children.length}개`}
+        </p>
+      </category-head>
+
+      {node!.children.length > 0 && (
+        <category-children>
+          {node!.children.map((child) => (
+            <a href={`/blog/${child.path}`}>
+              <span>{child.label}</span>
+              <em>{child.total}</em>
+            </a>
+          ))}
+        </category-children>
+      )}
+
+      {node!.posts.length > 0 && (
+        <ul>
+          {node!.posts.map((p) => (
+            <BlogCard post={p} />
+          ))}
+        </ul>
+      )}
+    </Layout>
+  )
+}
+
+<style>
+  header {
+    margin-block-end: var(--space-m);
+
+    h1 {
+      font-size: var(--step-3);
+      line-height: calc(var(--leading-offset) + 1em);
+      font-weight: var(--font-weight-medium);
+    }
+
+    post-meta {
+      --underline: var(--muted-foreground);
+
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-3xs);
+      margin-block-start: var(--space-3xs);
+      font-size: var(--step--1);
+      color: var(--muted-foreground);
+
+      post-tags {
+        --underline: transparent;
+
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3xs);
+
+        a {
+          color: color-mix(in oklab, var(--muted-foreground) 50%, transparent);
+
+          &:hover {
+            color: var(--foreground);
+          }
+        }
+      }
+
+      time ~ post-tags::before {
+        content: "·";
+      }
+
+      a {
+        color: var(--foreground);
+      }
+    }
+
+    > p {
+      margin-block-start: var(--space-2xs);
+      font-size: var(--step--1);
+      color: var(--muted-foreground);
+    }
+  }
+
+  post-banner {
+    display: block;
+    margin-block-end: var(--space-m);
+
+    :global(img) {
+      inline-size: 100%;
+      block-size: auto;
+    }
+  }
+
+  category-head {
+    display: block;
+    margin-block-end: var(--space-m);
+
+    h1 {
+      font-size: var(--step-2);
+      line-height: calc(var(--leading-offset) + 1em);
+      font-weight: var(--font-weight-medium);
+    }
+
+    p {
+      margin-block-start: var(--space-3xs);
+      font-size: var(--step--1);
+      color: var(--muted-foreground);
+    }
+  }
+
+  category-children {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    margin-block-end: var(--space-m);
+
+    a {
+      --underline: transparent;
+
+      display: inline-flex;
+      align-items: baseline;
+      gap: var(--space-3xs);
+      padding: var(--space-3xs) var(--space-xs);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: var(--step--1);
+
+      &:hover {
+        border-color: var(--foreground);
+      }
+
+      em {
+        font-style: normal;
+        color: var(--muted-foreground);
+      }
+    }
+  }
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-m);
+  }
+</style>

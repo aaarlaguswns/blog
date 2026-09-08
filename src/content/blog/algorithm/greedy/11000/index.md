@@ -1,0 +1,42 @@
+---
+title: Greedy 11000
+description: C++ 코드
+date: 2025-12-06T10:38:09.000Z
+---
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+//1 3
+//2 4
+//3 5
+
+int main()
+{
+    int n;
+    cin >> n;
+
+    vector<pair<int, int>> lecture(n);
+    for(int i = 0; i < n; i++)
+    {
+        cin >> lecture[i].first >> lecture[i].second;
+    }
+
+    sort(lecture.begin(), lecture.end());
+
+    priority_queue<int, vector<int>, greater<int>> room_end;   //최소 시간이 필요하므로 greater<int>
+
+    for(auto [start, end] : lecture)     //강의 시작, 끝시간 나눔
+    {
+        if(!room_end.empty() && room_end.top() <= start)  //큐가 비었거나 최소시간이 다음시작시간
+        {                                                 //보다 작거나 같으면 원래강의실 재사용가능
+            room_end.pop();
+        }
+        room_end.push(end);
+    }
+
+    cout << room_end.size() << endl;
+
+}
+```

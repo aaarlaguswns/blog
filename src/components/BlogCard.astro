@@ -1,0 +1,103 @@
+---
+import { formatDate } from "@/lib/utils"
+import { Image } from "astro:assets"
+import type { CollectionEntry } from "astro:content"
+
+type Props = { post: CollectionEntry<"blog"> }
+
+const { post } = Astro.props
+---
+
+<li>
+  {post.data.image && (
+      <a href={`/blog/${post.id}`} tabindex="-1" aria-hidden="true">
+        <Image src={post.data.image} alt="" width={640} height={336} />
+      </a>
+    )}
+  <entry-info>
+    <a href={`/blog/${post.id}`}>{post.data.title}</a>
+    <entry-meta>
+      <time datetime={post.data.date.toISOString()}
+        >{formatDate(post.data.date)}</time
+      >
+      {post.data.tags && (
+          <entry-tags>
+            {post.data.tags.map((tag) => (
+              <span>#{tag}</span>
+            ))}
+          </entry-tags>
+        )}
+    </entry-meta>
+    <p>{post.data.description}</p>
+  </entry-info>
+</li>
+
+<style>
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-s);
+
+    > a {
+      flex-shrink: 0;
+      inline-size: 14rem;
+
+      :global(img) {
+        inline-size: 100%;
+        block-size: auto;
+      }
+    }
+
+    entry-info {
+      display: flex;
+      flex-direction: column;
+
+      > a {
+        font-size: var(--step-1);
+        line-height: calc(var(--leading-offset) + 1em);
+        font-weight: var(--font-weight-medium);
+      }
+
+      entry-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3xs);
+        margin-block-end: var(--space-3xs);
+        font-size: var(--step--1);
+        color: var(--muted-foreground);
+
+        entry-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: var(--space-3xs);
+
+          span {
+            color: color-mix(
+              in oklab,
+              var(--muted-foreground) 50%,
+              transparent
+            );
+          }
+        }
+
+        time ~ entry-tags::before {
+          content: "·";
+        }
+      }
+
+      p {
+        color: var(--muted-foreground);
+      }
+    }
+
+    @media (width < 40rem) {
+      flex-direction: column;
+
+      > a {
+        inline-size: 100%;
+        max-inline-size: 32rem;
+      }
+    }
+  }
+</style>

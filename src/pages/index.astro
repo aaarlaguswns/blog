@@ -1,0 +1,101 @@
+---
+import BlogCard from "@/components/BlogCard.astro"
+import MetaPage from "@/components/MetaPage.astro"
+import Layout from "@/layouts/Layout.astro"
+import { getPosts } from "@/lib/content"
+import { SITE } from "@/consts"
+
+const posts = await getPosts()
+const recent = posts.slice(0, 6)
+const hasMore = posts.length > recent.length
+---
+
+<Layout>
+  <MetaPage slot="head" />
+
+  <site-intro>
+    <h1>{SITE.title}</h1>
+    {/*
+      TODO: 자기소개 — 이 두 문단은 자리만 잡아둔 것이니 본인 말로 고쳐 쓸 것.
+      텔레그램에서 "블로그 소개글 이렇게 바꿔줘" 라고 해도 여기를 고친다.
+    */}
+    <prose-content>
+      <p>
+        기록해두지 않으면 사라지는 것들을 적어둔다. 주로 알고리즘 문제를 풀다
+        막힌 지점, 만들다 만 것들, 그리고 나중의 내가 다시 찾아볼 것 같은 메모.
+      </p>
+    </prose-content>
+  </site-intro>
+
+  <hr>
+
+  <section>
+    <section-head>
+      <h2>최근 글</h2>
+      {hasMore && <a href="/blog">전체 보기</a>}
+    </section-head>
+
+    {recent.length > 0 ? (
+        <ul>
+          {recent.map((post) => <BlogCard post={post} />)}
+        </ul>
+      ) : (
+        <prose-content><p>아직 쓴 글이 없다.</p></prose-content>
+      )}
+  </section>
+</Layout>
+
+<style>
+  site-intro {
+    display: block;
+
+    @media (width >= 64rem) {
+      margin-block-start: -0.2em;
+    }
+
+    h1 {
+      font-size: var(--step-2);
+      line-height: calc(var(--leading-offset) + 1em);
+      font-weight: var(--font-weight-medium);
+      color: var(--foreground);
+      margin-block-end: var(--space-2xs);
+    }
+
+    prose-content {
+      color: var(--muted-foreground);
+    }
+  }
+
+  hr {
+    margin-block: var(--space-m);
+    border-block-start: 2px solid var(--border);
+  }
+
+  section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-s);
+    margin-block-end: var(--space-s);
+
+    h2 {
+      font-size: var(--step-0);
+      font-weight: var(--font-weight-medium);
+    }
+
+    a {
+      font-size: var(--step--1);
+      color: var(--muted-foreground);
+
+      &:hover {
+        color: var(--foreground);
+      }
+    }
+  }
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-m);
+  }
+</style>

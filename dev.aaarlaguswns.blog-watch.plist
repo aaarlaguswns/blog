@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  옵시디언 볼트 Blog/ 폴더 감시 → 자동 동기화 → 커밋 → 푸시.
+  설치:   scripts/install-watcher.sh
+  이 파일은 저장소에 두고, 설치 스크립트가 ~/Library/LaunchAgents 로 복사한다.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>dev.aaarlaguswns.blog-watch</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__BLOG_ROOT__/scripts/watch.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>__BLOG_ROOT__</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>HOME</key>
+    <string>__HOME__</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- 죽으면 다시 띄운다. watch.sh 는 fswatch 가 끊기면 스스로 종료한다. -->
+  <key>KeepAlive</key>
+  <true/>
+
+  <!-- 죽자마자 재시작하며 CPU 를 태우지 않도록 최소 간격을 둔다. -->
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+
+  <key>StandardOutPath</key>
+  <string>__BLOG_ROOT__/.logs/watch.log</string>
+  <key>StandardErrorPath</key>
+  <string>__BLOG_ROOT__/.logs/watch.log</string>
+</dict>
+</plist>

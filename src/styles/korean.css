@@ -1,0 +1,59 @@
+/*
+ * 한국어 본문을 위한 조정.
+ *
+ * 테마 원본 CSS 파일은 되도록 건드리지 않고 여기서만 덮어쓴다.
+ * 나중에 업스트림 테마와 비교하거나 갈아끼울 때 이 파일만 보면 되게 하려는 것.
+ * Layout.astro 에서 테마 스타일들 뒤에 마지막으로 import 한다.
+ */
+
+:root {
+  /*
+   * 원본값 -0.015em 은 라틴 알파벳 기준이다.
+   * 한글은 이미 글자 하나가 네모를 꽉 채우기 때문에 그만큼 조이면 글자끼리 붙어 보인다.
+   */
+  --tracking-tight: -0.005em;
+
+  /*
+   * 행간. 원본은 0.65rem + 1em.
+   * 한글은 라틴보다 글자 높이가 균일하고 빽빽해서 같은 행간이면 답답하다.
+   */
+  --leading-offset: 0.85rem;
+}
+
+/*
+ * 제목은 본문보다 조인 편이 단단해 보인다.
+ * 위에서 --tracking-tight 를 느슨하게 풀었으므로 제목만 따로 되돌린다.
+ */
+:where(h1, h2, h3, h4, h5, h6) {
+  letter-spacing: -0.022em;
+}
+
+/*
+ * 한국어에서 제일 중요한 한 줄.
+ * 기본값(break-all 성향)이면 "안녕하세" / "요" 처럼 어절 중간이 잘린다.
+ * keep-all 은 띄어쓰기 단위로만 줄을 바꾼다.
+ */
+body {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/*
+ * 단, keep-all 은 띄어쓰기 없는 긴 문자열(URL, 해시값)을 화면 밖으로 밀어낸다.
+ * 코드와 링크에서만 다시 끊을 수 있게 열어준다.
+ */
+:where(code, kbd, samp, pre, a[href]) {
+  word-break: break-word;
+}
+
+:where(pre, table) {
+  word-break: normal;
+}
+
+/*
+ * Pretendard 는 IBM Plex Sans 보다 x-height 가 커서, 한 줄에 영문과 한글이 섞이면
+ * 한글이 살짝 더 커 보인다. 살짝만 줄여서 눈높이를 맞춘다.
+ */
+:lang(ko) {
+  font-feature-settings: "case" 1;
+}

@@ -1,0 +1,57 @@
+---
+title: 2025 SCPC 2-1
+description: C++ 코드
+date: 2025-12-06T10:38:09.000Z
+---
+
+```cpp
+#include <bits/stdc++.h>
+#define fIO ios_base::sync_with_stdio(false); \
+cin.tie(NULL);
+
+using namespace std;
+
+int main()
+{
+    fIO
+    int T;
+    cin >> T;
+
+    int  N, L;
+    cin >> N >> L;
+
+    int count = 0;
+
+    vector<int> bomb(N);
+    for(int i = 0; i < N; i++)
+    {
+        cin >> bomb[i];
+    }
+
+    sort(bomb.begin(), bomb.end());
+
+    int current = 0;    //철수의 현재 위치
+    int sum = 0;        //거리 합
+    
+    for(int i = 0; i < N; i++)
+    {
+        sum += abs(current - bomb[i]);     //폭탄한테 감 -> 총 거리에 더해줌(나중에 돌아올떄도 더해줄 예정)
+        
+        if(abs(bomb[i]) <= abs(bomb[i] - L))   //0으로 갈지 L로 갈지 판단
+        {
+            sum += abs(bomb[i]);
+            current = 0;
+        }
+        else
+        {
+            sum += abs(bomb[i] - L);
+            current = L;
+        }
+    }
+    
+    cout << sum << endl;
+
+    return 0;
+
+}
+```

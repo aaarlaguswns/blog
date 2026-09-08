@@ -1,0 +1,85 @@
+---
+/*
+ * 카테고리 하나와 그 아래 글·하위 카테고리를 그린다.
+ * 하위 카테고리는 자기 자신을 다시 불러 그린다 (깊이 제한 없음).
+ */
+import BlogCard from "@/components/BlogCard.astro"
+import type { CategoryNode } from "@/lib/content"
+
+type Props = { node: CategoryNode; depth?: number }
+
+const { node, depth = 0 } = Astro.props
+const Heading = depth === 0 ? "h2" : "h3"
+---
+
+<category-section data-depth={depth || undefined}>
+  <Heading>
+    <a href={`/blog/${node.path}`}>{node.label}</a>
+    <em>{node.total}</em>
+  </Heading>
+
+  {node.posts.length > 0 && (
+      <ul>
+        {node.posts.map((post) => <BlogCard post={post} />)}
+      </ul>
+    )}
+
+  {node.children.map((child) => (
+      <Astro.self node={child} depth={depth + 1} />
+    ))}
+</category-section>
+
+<style>
+  category-section {
+    display: block;
+
+    & + & {
+      margin-block-start: var(--space-l);
+    }
+
+    :is(h2, h3) {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-2xs);
+      padding-block-end: var(--space-2xs);
+      border-block-end: 2px solid var(--border);
+      margin-block-end: var(--space-s);
+      font-size: var(--step-0);
+      font-weight: var(--font-weight-medium);
+
+      a {
+        --underline: transparent;
+      }
+
+      em {
+        font-style: normal;
+        font-size: var(--step--1);
+        font-weight: var(--font-weight-normal);
+        color: var(--muted-foreground);
+      }
+    }
+
+    /* 하위 분류는 한 단 들여쓰고 구분선을 옅게 */
+    &[data-depth] {
+      margin-block-start: var(--space-m);
+      padding-inline-start: var(--space-s);
+      border-inline-start: 1px solid var(--border);
+
+      :is(h2, h3) {
+        border-block-end-width: 1px;
+        font-size: var(--step--1);
+        color: var(--muted-foreground);
+
+        a {
+          color: var(--foreground);
+        }
+      }
+    }
+
+    ul {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-m);
+    }
+  }
+</style>
