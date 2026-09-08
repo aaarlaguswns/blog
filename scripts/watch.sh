@@ -70,31 +70,48 @@ sync_and_publish() {
 # 시작할 때 한 번 맞춰둔다 (감시가 꺼져 있는 동안 바뀐 것 반영)
 sync_and_publish </dev/null
 
-# fswatch 가 변경 경로를 NUL 로 구분해 흘려보낸다.
-# 마지막 이벤트 후 DEBOUNCE 초 동안 조용하면 그때 한 번 실행한다.
 #
-# read 의 반환값을 반드시 구분해야 한다:
-#   0     → 경로를 읽었다
-#   >128  → 타임아웃 = 조용해졌다
-#   그 외 → EOF, 즉 fswatch 가 죽었다. 여기서 빠져나가지 않으면 무한루프가 된다.
-fswatch -0 -r --latency 2 -e '/\.' "$VAULT" | {
-  pending=0
-  while true; do
-    IFS= read -r -d "" -t "$DEBOUNCE" path
-    rc=$?
-    if [[ $rc -eq 0 ]]; then
+# 디바운스: "마지막 변경 후 DEBOUNCE 초 동안 조용하면 그때 한 번 실행".
+#
+# read -t 의 반환값으로 타임아웃과 EOF 를 가르는 방법은 쓰지 않는다.
+# macOS 기본 /bin/bash 는 3.2 라서 타임아웃에 1 을 돌려주는데, 이건 EOF 와
+# 구분이 안 된다 (bash 4 부터 128 초과 값을 준다). 그걸 모르고 짜면
+# 첫 타임아웃마다 감시가 죽는다.
+#
+# 그래서 감시와 판단을 갈라놓는다:
+#   · fswatch 는 변경이 생길 때마다 표시 파일을 건드리기만 한다
+#   · 본 루프는 그 파일이 마지막으로 바뀐 지 얼마나 됐는지만 본다
+# bash 버전에 기대지 않고, "조용해졌는지"를 정확히 판단할 수 있다.
+#
+MARKER="$LOG_DIR/.dirty"
+rm -f "$MARKER"
+
+fswatch -0 -r --latency 2 -e '/\.' "$VAULT" \
+  | while IFS= read -r -d "" path; do
       case "$path" in
-        *.md|*.png|*.jpg|*.jpeg|*.gif|*.webp|*.avif|*.svg) pending=1 ;;
+        *.md|*.png|*.jpg|*.jpeg|*.gif|*.webp|*.avif|*.svg) touch "$MARKER" ;;
       esac
-    elif [[ $rc -gt 128 ]]; then
-      if [[ "$pending" == "1" ]]; then
-        pending=0
-        # 루프의 stdin(fswatch 파이프)을 물려주지 않는다 — 위 주석 참고
-        sync_and_publish </dev/null
-      fi
-    else
-      log "fswatch 가 종료됐다 (read rc=$rc). 감시를 끝낸다 — launchd 가 다시 띄운다."
-      exit 1
-    fi
-  done
-}
+    done &
+WATCHER_PID=$!
+
+# 이 스크립트가 끝날 때 감시 파이프라인도 같이 정리한다
+trap 'kill "$WATCHER_PID" 2>/dev/null; exit' TERM INT
+
+while true; do
+  sleep 5
+
+  if ! kill -0 "$WATCHER_PID" 2>/dev/null; then
+    log "fswatch 가 멈췄다. 감시를 끝낸다 — launchd 가 다시 띄운다."
+    exit 1
+  fi
+
+  [ -e "$MARKER" ] || continue
+
+  # 표시 파일이 마지막으로 건드려진 뒤 얼마나 지났나 (BSD stat)
+  changed_at=$(stat -f %m "$MARKER" 2>/dev/null) || continue
+  quiet=$(( $(date +%s) - changed_at ))
+  [ "$quiet" -ge "$DEBOUNCE" ] || continue
+
+  rm -f "$MARKER"
+  sync_and_publish </dev/null
+done
