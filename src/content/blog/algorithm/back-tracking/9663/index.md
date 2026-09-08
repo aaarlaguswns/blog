@@ -2,6 +2,7 @@
 title: Back Tracking 9663 - N-Queen
 description: C++ 코드
 date: 2025-12-06T10:38:09.000Z
+source: obsidian
 ---
 
 ```cpp

@@ -2,6 +2,7 @@
 title: Number
 description: "Number.isSafeInteger: 안전한 정수 값인지 판단"
 date: 2025-12-06T10:38:09.000Z
+source: obsidian
 ---
 
 특이한 것만 정리

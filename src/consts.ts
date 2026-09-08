@@ -20,21 +20,15 @@ export const NAVIGATION = [
 
 /*
  * 카테고리 폴더 이름은 주소에 쓰이느라 소문자·하이픈으로 눌려 있다.
- * 화면에 보여줄 이름은 여기서 정한다. 키는 폴더 경로 전체.
- * 없는 카테고리는 폴더 이름을 그대로 다듬어 쓴다(아래 categoryLabel).
- * 새 카테고리 폴더를 만들면 여기 한 줄 추가하면 된다.
+ * 화면에 보여줄 이름과, 옵시디언 볼트에서 쓸 폴더 이름을 여기서 정한다.
+ *
+ * 사이트(TypeScript)와 스크립트(Node)가 함께 읽어야 해서 JSON 파일로 빼뒀다.
+ * 새 분류를 만들면 category-labels.json 에 한 줄 추가하면 된다.
+ * 없는 분류는 폴더 이름을 다듬어 쓴다(lib/content.ts 의 categoryLabel).
  */
-export const CATEGORY_LABELS: Record<string, string> = {
-  "2025-scpc": "2025 SCPC",
-  nypc: "NYPC",
-  javascript: "JavaScript",
-  algorithm: "Algorithm",
-  "algorithm/bfs": "BFS",
-  "algorithm/back-tracking": "Back Tracking",
-  "algorithm/binary-search": "Binary Search",
-  "algorithm/graph": "Graph",
-  "algorithm/greedy": "Greedy",
-}
+import categoryLabels from "../category-labels.json"
+
+export const CATEGORY_LABELS: Record<string, string> = categoryLabels
 
 export const SOCIALS: { href: string; label: string; icon: SvgComponent }[] = [
   { href: "https://github.com/aaarlaguswns", label: "GitHub", icon: GitHub },

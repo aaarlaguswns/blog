@@ -2,6 +2,7 @@
 title: 빌트인 객체
 description: 자바스크립트가 지원하는 표준 객체
 date: 2025-12-06T10:38:09.000Z
+source: obsidian
 ---
 
 ## 빌트인 객체와 호스트 객체의 차이

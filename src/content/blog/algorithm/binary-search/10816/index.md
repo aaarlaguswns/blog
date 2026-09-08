@@ -2,6 +2,7 @@
 title: Binary Search 10816
 description: C++ 코드
 date: 2025-12-06T10:38:09.000Z
+source: obsidian
 ---
 
 ```cpp

@@ -2,6 +2,7 @@
 title: Ajax
 description: Asynchronous Javascript And Xml 자바스크립트로 HTTP 요청을 보내서 응답을 받아오는 기술 웹 브라우저에 내장되어 있는 ZMLHttpRequest 객체를 사용 이름에 Xml이 있지만 모든 종류의 데이터를 가져올 수 있다
 date: 2025-12-06T10:38:09.000Z
+source: obsidian
 ---
 
 Ajax는 라이브러리같은 개념이 아니라 비동기 통신 기술이다

@@ -49,9 +49,19 @@ mkdir -p "$HOME/Library/LaunchAgents" "$ROOT/.logs"
 sed -e "s|__BLOG_ROOT__|$ROOT|g" -e "s|__HOME__|$HOME|g" "$TEMPLATE" > "$TARGET"
 plutil -lint "$TARGET" >/dev/null
 
-# 이미 떠 있으면 내리고 다시 올린다
+# 이미 떠 있으면 내리고 다시 올린다.
+# bootout 은 비동기라, 곧바로 bootstrap 하면 아직 정리 중인 서비스와 부딪혀 실패한다.
+# 실제로 사라진 것을 확인한 뒤에 올린다.
 launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
-launchctl bootstrap "$DOMAIN" "$TARGET"
+for _ in $(seq 1 50); do
+  launchctl print "$DOMAIN/$LABEL" >/dev/null 2>&1 || break
+  sleep 0.2
+done
+
+if ! launchctl bootstrap "$DOMAIN" "$TARGET"; then
+  echo "✗ 등록에 실패했다. 잠시 뒤 다시 실행해 볼 것." >&2
+  exit 1
+fi
 launchctl enable "$DOMAIN/$LABEL"
 
 echo "등록 완료: $TARGET"

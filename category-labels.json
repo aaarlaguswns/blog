@@ -1,0 +1,11 @@
+{
+  "2025-scpc": "2025 SCPC",
+  "nypc": "NYPC",
+  "javascript": "JavaScript",
+  "algorithm": "Algorithm",
+  "algorithm/bfs": "BFS",
+  "algorithm/back-tracking": "Back Tracking",
+  "algorithm/binary-search": "Binary Search",
+  "algorithm/graph": "Graph",
+  "algorithm/greedy": "Greedy"
+}

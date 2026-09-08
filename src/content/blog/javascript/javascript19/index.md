@@ -2,6 +2,7 @@
 title: 프로토타입
 description: 프로토타입에 대한 전체적인 이해
 date: 2025-12-06T10:38:09.000Z
+source: obsidian
 ---
 
 단 한줄의 코드를 작성했다고 가정
