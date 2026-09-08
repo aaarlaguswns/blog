@@ -5,6 +5,10 @@
 #   scripts/publish.sh                       자동 생성 메시지로 커밋
 #   scripts/publish.sh "글 제목 고침"         메시지 지정
 #   scripts/publish.sh --check               바뀐 게 있는지만 보고 종료
+#   scripts/publish.sh --content "메시지"     글과 첨부만 커밋 (코드 변경은 건드리지 않음)
+#
+# --content 는 옵시디언 감시 데몬이 쓴다. 사람이 코드를 고치는 중에 데몬이
+# 그 파일까지 "옵시디언 동기화" 라는 메시지로 커밋해버리는 사고를 막는다.
 #
 # 이 스크립트는 "공개" 를 실행하는 유일한 지점이다.
 # 글을 만들고 고치는 일(post.mjs, sync-obsidian.mjs)과 일부러 갈라놨다.
@@ -22,24 +26,33 @@ if [[ "$TOPLEVEL" != "$ROOT" ]]; then
   exit 1
 fi
 
+# --content 면 글과 첨부만 다룬다. 그 외 경로는 손대지 않는다.
+SCOPE=(".")
+if [[ "${1:-}" == "--content" ]]; then
+  SCOPE=("src/content" "public")
+  shift
+fi
+
+changed() { git status --porcelain -- "${SCOPE[@]}"; }
+
 if [[ "${1:-}" == "--check" ]]; then
-  if [[ -n "$(git status --porcelain)" ]]; then
+  if [[ -n "$(changed)" ]]; then
     echo "바뀐 것 있음:"
-    git status --short
+    changed
     exit 0
   fi
   echo "바뀐 것 없음"
   exit 0
 fi
 
-if [[ -z "$(git status --porcelain)" ]]; then
+if [[ -z "$(changed)" ]]; then
   echo "바뀐 것이 없어서 아무것도 안 했다."
   exit 0
 fi
 
 # 무엇이 바뀌었는지 먼저 보여준다 — 로그만 보고도 뭘 내보냈는지 알 수 있게.
 echo "── 내보낼 변경 ──"
-git status --short
+changed
 echo
 
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
@@ -47,9 +60,9 @@ MESSAGE="${1:-}"
 
 if [[ -z "$MESSAGE" ]]; then
   # 글 폴더 이름에서 메시지를 만든다
-  CHANGED="$(git status --porcelain \
-    | sed -n 's|.* src/content/blog/\([^/]*\)/.*|\1|p' \
-    | sort -u | head -3 | paste -sd ', ' -)"
+  CHANGED="$(changed \
+    | sed -n 's|.*src/content/blog/\(.*\)/[^/]*$|\1|p' \
+    | sed 's|/assets$||' | sort -u | head -3 | paste -sd ', ' -)"
   if [[ -n "$CHANGED" ]]; then
     MESSAGE="글 업데이트: $CHANGED"
   else
@@ -57,7 +70,7 @@ if [[ -z "$MESSAGE" ]]; then
   fi
 fi
 
-git add -A
+git add -A -- "${SCOPE[@]}"
 git commit -q -m "$MESSAGE"
 echo "커밋: $(git rev-parse --short HEAD) $MESSAGE"
 

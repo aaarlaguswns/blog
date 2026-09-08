@@ -26,12 +26,10 @@ mkdir -p "$VAULT"
 log "감시 시작: $VAULT (디바운스 ${DEBOUNCE}초)"
 
 #
-# 주의: 이 함수 안의 모든 외부 명령은 stdin 을 /dev/null 로 막아야 한다.
+# 볼트 → 글 동기화 → 빌드 → 커밋·푸시. 실패하면 그 자리에서 멈춘다.
 #
-# 이 함수는 `fswatch | while read` 루프 안에서 불린다. 그 루프의 stdin 은
-# fswatch 의 파이프인데, npm 이나 git 이 stdin 을 물려받으면 파이프를 빨아들여서
-# 다음 read 가 EOF 를 받고 감시가 통째로 죽는다.
-# (launchd 가 되살려주긴 하지만 그 사이 변경을 놓친다)
+# 안쪽 명령들의 stdin 을 /dev/null 로 막아둔 것은, 데몬으로 돌 때 물려받은
+# 입력이 없는데도 npm 이나 git 이 무언가를 물어보며 멈춰 서지 않게 하기 위해서다.
 #
 sync_and_publish() {
   log "── 동기화 시작 ──"
@@ -64,7 +62,7 @@ sync_and_publish() {
     return 1
   fi
 
-  scripts/publish.sh "옵시디언 동기화" </dev/null 2>&1 | while read -r l; do log "  $l"; done
+  scripts/publish.sh --content "옵시디언 동기화" </dev/null 2>&1 | while read -r l; do log "  $l"; done
 }
 
 # 시작할 때 한 번 맞춰둔다 (감시가 꺼져 있는 동안 바뀐 것 반영)
