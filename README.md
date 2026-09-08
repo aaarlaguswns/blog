@@ -2,13 +2,22 @@
 
 Astro 로 만든 개인 블로그. `v4` 브랜치에 푸시하면 Cloudflare Pages 가 자동으로 배포한다.
 
-글을 올리는 길이 셋 있다.
+## 글은 어디에 있나
 
-| 방법 | 어떻게 | 발행 시점 |
+**원본은 옵시디언 볼트 `~/Documents/Obsidian Vault/Blog/` 다.**
+저장소의 `src/content/blog/` 는 볼트에서 만들어진 결과물이라 직접 고치면 덮어써진다.
+
+감시 데몬이 볼트를 지켜보다가 변경 후 20초쯤 조용해지면 동기화 → 빌드 → 커밋 → 푸시한다.
+사이트에 나가는 조건은 frontmatter 의 `publish: true` 하나뿐이다.
+
+글 쓰는 길은 둘.
+
+| 방법 | 어떻게 | 발행 |
 | --- | --- | --- |
-| 텔레그램 | OpenClaw 에게 "블로그에 ~ 써줘" | 사람이 "발행" 이라고 답해야 나감 |
-| 옵시디언 | 볼트의 `Blog/` 폴더에 글 작성 | `publish: true` 가 있으면 20초 뒤 자동 |
-| 직접 | `src/content/blog/` 편집 후 `scripts/publish.sh` | 즉시 |
+| 옵시디언 | 볼트 `Blog/` 에 노트 작성 | `publish: true` 를 넣으면 1~2분 뒤 자동 |
+| 텔레그램 | OpenClaw 에게 "블로그에 ~ 써줘" | 초안으로 만들고, 사람이 "발행" 해야 나감 |
+
+둘 다 결국 볼트를 고치는 것이라 서로 부딪히지 않는다.
 
 ## 구조
 
@@ -68,9 +77,10 @@ source: obsidian       # 볼트에서 온 글이라는 표시 (자동)
 | --- | --- |
 | `npm run dev` | 개발 서버 (localhost:4321) |
 | `npm run build` | 빌드 + 타입 검사. **푸시 전에 반드시 통과시킬 것** |
-| `scripts/post.mjs` | 글 생성·목록·발행상태 변경·이미지 첨부·삭제 |
-| `scripts/publish.sh` | 커밋 + 푸시 = **공개**. 유일한 배포 지점 |
-| `scripts/sync-obsidian.mjs` | 볼트 `Blog/` → 글로 동기화 |
+| `scripts/post.mjs` | **볼트의** 글 생성·조회·수정·발행·첨부·삭제 |
+| `scripts/publish.sh` | 커밋 + 푸시. 평소엔 데몬이 알아서 부른다 |
+| `scripts/sync-obsidian.mjs` | 볼트 `Blog/` → `src/content/blog/` 동기화 |
+| `scripts/export-to-vault.mjs` | 저장소 글 → 볼트 (이사용, 1회성) |
 | `scripts/watch.sh` | 볼트 감시 데몬 (launchd 가 띄움) |
 | `scripts/install-watcher.sh` | 감시 데몬 등록/해제/상태 |
 | `scripts/migrate-quartz.mjs` | Quartz 글 이전 (1회성, 기록용으로 남김) |
@@ -80,11 +90,12 @@ source: obsidian       # 볼트에서 온 글이라는 표시 (자동)
 
 ## 주의할 점
 
-- **푸시가 곧 공개다.** `publish.sh` 를 부르기 전엔 아무것도 공개되지 않는다.
+- **`src/content/blog/` 를 직접 고치지 말 것.** 볼트가 원본이라 다음 동기화에 덮어써진다.
+  고칠 곳은 볼트, 또는 `scripts/post.mjs`.
 - **옵시디언 감시 범위는 볼트의 `Blog/` 폴더 하나뿐이다.** 그 밖은 읽지 않는다.
-  거기에 더해 `publish: true` 가 없는 글은 `draft` 로 넘어가 사이트에 뜨지 않는다.
-- **`source: obsidian` 인 글은 여기서 고치지 말 것.** 볼트가 원본이라 다음 동기화에 덮어써진다.
-- **제목을 바꾸면 주소가 바뀐다.** 이미 공개한 글이면 기존 링크가 깨진다.
+  거기에 더해 `publish: true` 가 없는 글은 초안으로 남아 사이트에 뜨지 않는다.
+- **제목이나 분류를 바꾸면 주소가 바뀐다.** 이미 공개한 글이면 기존 링크가 깨진다.
+- 사이트가 안 바뀌면 `tail -20 .logs/watch.log`. 빌드가 깨지면 푸시하지 않고 이유를 남긴다.
 - 요약(`description`)을 안 쓰면 본문 첫 문단을 가져다 쓰고, 그 문단은 본문에서 빠진다.
   첫 문단을 본문에 남기고 싶으면 `description` 을 직접 써두면 된다.
 
