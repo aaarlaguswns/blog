@@ -25,10 +25,18 @@ fi
 mkdir -p "$VAULT"
 log "감시 시작: $VAULT (디바운스 ${DEBOUNCE}초)"
 
+#
+# 주의: 이 함수 안의 모든 외부 명령은 stdin 을 /dev/null 로 막아야 한다.
+#
+# 이 함수는 `fswatch | while read` 루프 안에서 불린다. 그 루프의 stdin 은
+# fswatch 의 파이프인데, npm 이나 git 이 stdin 을 물려받으면 파이프를 빨아들여서
+# 다음 read 가 EOF 를 받고 감시가 통째로 죽는다.
+# (launchd 가 되살려주긴 하지만 그 사이 변경을 놓친다)
+#
 sync_and_publish() {
   log "── 동기화 시작 ──"
   local result
-  if ! result="$(node scripts/sync-obsidian.mjs --json 2>&1)"; then
+  if ! result="$(node scripts/sync-obsidian.mjs --json 2>&1 </dev/null)"; then
     log "동기화 실패: $result"
     return 1
   fi
@@ -50,17 +58,17 @@ sync_and_publish() {
 
   log "바뀐 글 ${changed}개 — 발행한다"
   # 빌드가 깨지는 글을 사이트에 올리지 않는다. 실패하면 커밋도 안 한다.
-  if ! npm run build >"$LOG_DIR/build.log" 2>&1; then
+  if ! npm run build >"$LOG_DIR/build.log" 2>&1 </dev/null; then
     log "빌드 실패 — 푸시하지 않는다. 자세한 내용: $LOG_DIR/build.log"
     tail -20 "$LOG_DIR/build.log"
     return 1
   fi
 
-  scripts/publish.sh "옵시디언 동기화" 2>&1 | while read -r l; do log "  $l"; done
+  scripts/publish.sh "옵시디언 동기화" </dev/null 2>&1 | while read -r l; do log "  $l"; done
 }
 
 # 시작할 때 한 번 맞춰둔다 (감시가 꺼져 있는 동안 바뀐 것 반영)
-sync_and_publish
+sync_and_publish </dev/null
 
 # fswatch 가 변경 경로를 NUL 로 구분해 흘려보낸다.
 # 마지막 이벤트 후 DEBOUNCE 초 동안 조용하면 그때 한 번 실행한다.
@@ -81,7 +89,8 @@ fswatch -0 -r --latency 2 -e '/\.' "$VAULT" | {
     elif [[ $rc -gt 128 ]]; then
       if [[ "$pending" == "1" ]]; then
         pending=0
-        sync_and_publish
+        # 루프의 stdin(fswatch 파이프)을 물려주지 않는다 — 위 주석 참고
+        sync_and_publish </dev/null
       fi
     else
       log "fswatch 가 종료됐다 (read rc=$rc). 감시를 끝낸다 — launchd 가 다시 띄운다."
