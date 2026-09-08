@@ -10,7 +10,7 @@
  *
  * 주소가 바뀌지 않게 하는 것이 핵심이다.
  *   volt 의 폴더·파일 이름은 다시 슬러그로 눌렸을 때 지금 주소와 같아야 한다.
- *   그래서 폴더 이름은 category-labels.json 의 보기 좋은 이름을 쓰되,
+ *   그래서 폴더 이름은 categories.json 의 보기 좋은 이름을 쓰되,
  *   슬러그가 어긋나면 그 자리에서 멈춘다 (조용히 주소를 깨뜨리지 않는다).
  *
  * 이미 볼트에 같은 이름의 노트가 있으면 건드리지 않는다 (--force 로 덮어쓰기).
@@ -29,8 +29,12 @@ const args = new Set(process.argv.slice(2))
 const DRY = args.has("--dry")
 const FORCE = args.has("--force")
 
-const LABELS = JSON.parse(
-  readFileSync(join(BLOG_ROOT, "category-labels.json"), "utf8"),
+/** categories.json: { 슬러그: { label, accent, tint, ink } } */
+const CATS = JSON.parse(
+  readFileSync(join(BLOG_ROOT, "categories.json"), "utf8"),
+)
+const LABELS = Object.fromEntries(
+  Object.entries(CATS).map(([slug, meta]) => [slug, meta.label]),
 )
 
 /** 폴더 경로 → 볼트에서 쓸 사람이 읽는 이름 */

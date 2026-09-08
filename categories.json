@@ -1,0 +1,56 @@
+{
+  "2025-scpc": {
+    "label": "2025 SCPC",
+    "accent": ["#b45309", "#fbbf24"],
+    "tint": "#fef3c7",
+    "ink": "#92400e"
+  },
+  "nypc": {
+    "label": "NYPC",
+    "accent": ["#6d28d9", "#c4b5fd"],
+    "tint": "#ede9fe",
+    "ink": "#5b21b6"
+  },
+  "javascript": {
+    "label": "JavaScript",
+    "accent": ["#1d4ed8", "#93c5fd"],
+    "tint": "#dbeafe",
+    "ink": "#1e40af"
+  },
+  "algorithm": {
+    "label": "Algorithm",
+    "accent": ["#047857", "#6ee7b7"],
+    "tint": "#d1fae5",
+    "ink": "#065f46"
+  },
+  "algorithm/bfs": {
+    "label": "BFS",
+    "accent": ["#0e7490", "#67e8f9"],
+    "tint": "#cffafe",
+    "ink": "#155e75"
+  },
+  "algorithm/back-tracking": {
+    "label": "Back Tracking",
+    "accent": ["#be123c", "#fda4af"],
+    "tint": "#ffe4e6",
+    "ink": "#9f1239"
+  },
+  "algorithm/binary-search": {
+    "label": "Binary Search",
+    "accent": ["#4338ca", "#a5b4fc"],
+    "tint": "#e0e7ff",
+    "ink": "#3730a3"
+  },
+  "algorithm/graph": {
+    "label": "Graph",
+    "accent": ["#0f766e", "#5eead4"],
+    "tint": "#ccfbf1",
+    "ink": "#115e59"
+  },
+  "algorithm/greedy": {
+    "label": "Greedy",
+    "accent": ["#a16207", "#fde047"],
+    "tint": "#fef9c3",
+    "ink": "#854d0e"
+  }
+}

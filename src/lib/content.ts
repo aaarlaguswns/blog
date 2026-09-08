@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS, SITE } from "@/consts"
+import { CATEGORIES, SITE } from "@/consts"
 import { getCollection, type CollectionEntry } from "astro:content"
 import { categoryPath, categorySegments } from "@/lib/utils"
 
@@ -14,15 +14,53 @@ export async function getPosts(): Promise<Post[]> {
 
 /**
  * 폴더 경로를 사람이 읽을 이름으로.
- * consts.ts 의 CATEGORY_LABELS 에 있으면 그것을, 없으면 폴더 이름을 다듬어 쓴다.
+ * categories.json 에 있으면 그것을, 없으면 폴더 이름을 다듬어 쓴다.
  */
 export function categoryLabel(path: string): string {
-  if (CATEGORY_LABELS[path]) return CATEGORY_LABELS[path]
+  if (CATEGORIES[path]) return CATEGORIES[path].label
   const last = path.split("/").at(-1) ?? path
   return last
     .split("-")
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
     .join(" ")
+}
+
+/**
+ * 글 하나를 목록 카드에 그릴 때 필요한 분류 정보.
+ *
+ * 배지는 최상위 분류를 보여준다 — 태그보다 큰 범주가 눈에 먼저 들어와야 하고,
+ * 같은 계열 글이 같은 색으로 묶여 보여야 하기 때문이다.
+ * 세부 분류(Binary Search 처럼)는 그 옆에 옅게 덧붙이고, 썸네일은 세부 분류의
+ * 그림을 쓴다. 그래서 색은 통일되고 그림만 달라진다.
+ */
+export function postCategory(id: string) {
+  const segments = id.split("/").slice(0, -1)
+  if (!segments.length) return null
+
+  const rootPath = segments[0]
+  const leafPath = segments.join("/")
+  const root = CATEGORIES[rootPath]
+
+  return {
+    root: { path: rootPath, label: categoryLabel(rootPath) },
+    leaf:
+      leafPath === rootPath
+        ? null
+        : { path: leafPath, label: categoryLabel(leafPath) },
+    /** [라이트, 다크] 배지 글자색. 정의가 없으면 본문 색을 쓴다. */
+    accent: root?.accent ?? null,
+    /** 세부 분류의 그림. 없으면 상위 분류 것으로 거슬러 올라간다. */
+    thumb: thumbFor(leafPath),
+  }
+}
+
+function thumbFor(path: string): string | null {
+  const parts = path.split("/")
+  for (let i = parts.length; i > 0; i--) {
+    const key = parts.slice(0, i).join("/")
+    if (CATEGORIES[key]) return `/thumbs/${key.replace(/\//g, "-")}.svg`
+  }
+  return null
 }
 
 export type CategoryNode = {

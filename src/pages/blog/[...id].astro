@@ -9,6 +9,7 @@
  * 주소가 글을 가리키면 글을, 폴더를 가리키면 그 폴더의 목록을 그린다.
  */
 import BlogCard from "@/components/BlogCard.astro"
+import CategorySection from "@/components/CategorySection.astro"
 import MetaPage from "@/components/MetaPage.astro"
 import MetaPost from "@/components/MetaPost.astro"
 import PostActions from "@/components/PostActions.astro"
@@ -163,6 +164,15 @@ const crumbs = post
           ))}
         </ul>
       )}
+
+      {/*
+        하위 분류의 글까지 펼쳐 보여준다.
+        Algorithm 처럼 직속 글이 하나도 없는 분류는, 이게 없으면 칩만 덩그러니 남아
+        빈 페이지처럼 보인다.
+      */}
+      {node!.children.map((child) => (
+        <CategorySection node={child} />
+      ))}
     </Layout>
   )
 }

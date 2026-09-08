@@ -1,103 +1,187 @@
 ---
+/*
+ * 목록에 쓰이는 글 카드.
+ *
+ * 분류를 태그보다 크게 보여주는 것이 이 카드의 요점이다.
+ *   · 색이 들어간 배지 = 최상위 분류 (Algorithm, JavaScript …)
+ *   · 그 옆 옅은 배지 = 세부 분류 (Binary Search …), 있을 때만
+ *   · 오른쪽 썸네일   = 세부 분류의 그림. 글에 대표 이미지가 있으면 그게 우선
+ * 태그는 예전처럼 아래쪽에 작게 남는다.
+ */
 import { formatDate } from "@/lib/utils"
+import { postCategory } from "@/lib/content"
 import { Image } from "astro:assets"
 import type { CollectionEntry } from "astro:content"
 
 type Props = { post: CollectionEntry<"blog"> }
 
 const { post } = Astro.props
+const href = `/blog/${post.id}`
+const cat = postCategory(post.id)
+
+// 배지 색. 분류 정의가 없으면 본문 색으로 조용히 물러난다.
+const accentStyle = cat?.accent
+  ? `--cat: light-dark(${cat.accent[0]}, ${cat.accent[1]})`
+  : undefined
 ---
 
 <li>
-  {post.data.image && (
-      <a href={`/blog/${post.id}`} tabindex="-1" aria-hidden="true">
+  <entry-info>
+    {cat && (
+        <entry-cats>
+          <a data-badge href={`/blog/${cat.root.path}`} style={accentStyle}>
+            {cat.root.label}
+          </a>
+          {cat.leaf && (
+            <a data-badge data-sub href={`/blog/${cat.leaf.path}`}>
+              {cat.leaf.label}
+            </a>
+          )}
+        </entry-cats>
+      )}
+
+    <a data-title href={href}>{post.data.title}</a>
+    <p>{post.data.description}</p>
+
+    <entry-meta>
+      <time datetime={post.data.date.toISOString()}>
+        {formatDate(post.data.date)}
+      </time>
+      {post.data.tags && post.data.tags.length > 0 && (
+        <entry-tags>
+          {post.data.tags.map((tag) => <span>#{tag}</span>)}
+        </entry-tags>
+      )}
+    </entry-meta>
+  </entry-info>
+
+  {post.data.image ? (
+      <a data-thumb href={href} tabindex="-1" aria-hidden="true">
         <Image src={post.data.image} alt="" width={640} height={336} />
       </a>
-    )}
-  <entry-info>
-    <a href={`/blog/${post.id}`}>{post.data.title}</a>
-    <entry-meta>
-      <time datetime={post.data.date.toISOString()}
-        >{formatDate(post.data.date)}</time
-      >
-      {post.data.tags && (
-          <entry-tags>
-            {post.data.tags.map((tag) => (
-              <span>#{tag}</span>
-            ))}
-          </entry-tags>
-        )}
-    </entry-meta>
-    <p>{post.data.description}</p>
-  </entry-info>
+    ) : cat?.thumb ? (
+      <a data-thumb href={href} tabindex="-1" aria-hidden="true">
+        <img src={cat.thumb} alt="" width="640" height="336" loading="lazy" decoding="async" />
+      </a>
+    ) : null}
 </li>
 
 <style>
   li {
     display: flex;
     align-items: flex-start;
+    justify-content: space-between;
     gap: var(--space-s);
+  }
 
-    > a {
-      flex-shrink: 0;
-      inline-size: 14rem;
+  entry-info {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    flex: 1;
+  }
 
-      :global(img) {
-        inline-size: 100%;
-        block-size: auto;
+  entry-cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3xs);
+    margin-block-end: var(--space-2xs);
+
+    [data-badge] {
+      --underline: transparent;
+
+      display: inline-block;
+      padding: 0.15em 0.6em;
+      border-radius: 999px;
+      font-size: var(--step--1);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+      white-space: nowrap;
+
+      /* 분류 색이 있으면 그 색으로, 없으면 본문 색으로 */
+      color: var(--cat, var(--foreground));
+      background-color: color-mix(
+        in oklab,
+        var(--cat, var(--foreground)) 12%,
+        transparent
+      );
+
+      &:hover {
+        background-color: color-mix(
+          in oklab,
+          var(--cat, var(--foreground)) 20%,
+          transparent
+        );
+      }
+
+      /* 세부 분류는 한 단 낮게 — 색 배지가 먼저 읽혀야 한다 */
+      &[data-sub] {
+        color: var(--muted-foreground);
+        background-color: var(--muted);
+
+        &:hover {
+          color: var(--foreground);
+        }
       }
     }
+  }
 
-    entry-info {
+  [data-title] {
+    font-size: var(--step-1);
+    line-height: calc(var(--leading-offset) + 1em);
+    font-weight: var(--font-weight-medium);
+  }
+
+  p {
+    margin-block-start: var(--space-3xs);
+    color: var(--muted-foreground);
+  }
+
+  entry-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3xs);
+    margin-block-start: var(--space-2xs);
+    font-size: var(--step--1);
+    color: color-mix(in oklab, var(--muted-foreground) 75%, transparent);
+
+    entry-tags {
       display: flex;
-      flex-direction: column;
-
-      > a {
-        font-size: var(--step-1);
-        line-height: calc(var(--leading-offset) + 1em);
-        font-weight: var(--font-weight-medium);
-      }
-
-      entry-meta {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: var(--space-3xs);
-        margin-block-end: var(--space-3xs);
-        font-size: var(--step--1);
-        color: var(--muted-foreground);
-
-        entry-tags {
-          display: flex;
-          flex-wrap: wrap;
-          gap: var(--space-3xs);
-
-          span {
-            color: color-mix(
-              in oklab,
-              var(--muted-foreground) 50%,
-              transparent
-            );
-          }
-        }
-
-        time ~ entry-tags::before {
-          content: "·";
-        }
-      }
-
-      p {
-        color: var(--muted-foreground);
-      }
+      flex-wrap: wrap;
+      gap: var(--space-3xs);
     }
 
-    @media (width < 40rem) {
-      flex-direction: column;
+    time ~ entry-tags::before {
+      content: "·";
+      margin-inline-end: var(--space-3xs);
+    }
+  }
 
-      > a {
-        inline-size: 100%;
-        max-inline-size: 32rem;
-      }
+  [data-thumb] {
+    flex-shrink: 0;
+    inline-size: 12rem;
+    border-radius: var(--radius-md, 8px);
+    overflow: hidden;
+    /* 파스텔 배경이 흰 바탕에 붙었을 때 가장자리를 잡아준다 */
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 8%, transparent);
+
+    :global(img) {
+      display: block;
+      inline-size: 100%;
+      block-size: auto;
+    }
+  }
+
+  @media (width < 44rem) {
+    li {
+      flex-direction: column-reverse;
+    }
+
+    [data-thumb] {
+      inline-size: 100%;
+      max-inline-size: 32rem;
+      margin-block-end: var(--space-2xs);
     }
   }
 </style>

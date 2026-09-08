@@ -29,8 +29,10 @@ src/
   consts.ts                         사이트 제목·설명·네비게이션·소셜
   styles/korean.css                 한글 타이포그래피 조정 (테마 위에 덮어씀)
   styles/pretendard.css             생성 파일 — 직접 고치지 말 것
+categories.json                     분류 이름·색 (사이트와 스크립트가 함께 읽음)
 public/
   fonts/pretendard/                 Pretendard 동적 서브셋 92개
+  thumbs/                           분류 썸네일 (생성 파일)
   _redirects                        Quartz 시절 주소 → 새 주소 (생성 파일)
 scripts/                            아래 참고
 ```
@@ -47,8 +49,23 @@ src/content/blog/algorithm/binary-search/1920/index.md
 `/blog/algorithm` 과 `/blog/algorithm/binary-search` 는 자동으로 그 분류의
 목록 페이지가 된다. 깊이 제한은 없다.
 
-폴더 이름은 주소에 쓰이느라 소문자·하이픈이므로, 화면에 보여줄 이름은
-`src/consts.ts` 의 `CATEGORY_LABELS` 에 적는다. 안 적으면 폴더 이름을 다듬어 쓴다.
+목록 카드는 분류를 태그보다 크게 보여준다. 색이 들어간 배지가 최상위 분류,
+그 옆 옅은 배지가 세부 분류, 오른쪽 썸네일은 세부 분류의 그림이다.
+글에 `image` 가 있으면 썸네일 대신 그걸 쓴다.
+
+폴더 이름은 주소에 쓰이느라 소문자·하이픈이므로, 보여줄 이름과 색은
+**`categories.json`** 에 적는다. 없는 분류는 폴더 이름을 다듬어 쓰고 색·그림은
+상위 분류 것을 빌린다.
+
+분류를 새로 만들면:
+
+```bash
+# categories.json 에 { "슬러그": { label, accent, tint, ink } } 추가한 뒤
+node scripts/make-thumbs.mjs
+```
+
+그림 자체를 새로 그리려면 `scripts/make-thumbs.mjs` 의 `scenes` 에 추가한다.
+없으면 상위 분류의 그림을 쓴다.
 
 옵시디언 볼트의 `Blog/` 안에 폴더를 만들면 그대로 분류가 된다.
 텔레그램에서는 `--category` 로 지정한다.
@@ -84,6 +101,7 @@ source: obsidian       # 볼트에서 온 글이라는 표시 (자동)
 | `scripts/watch.sh` | 볼트 감시 데몬 (launchd 가 띄움) |
 | `scripts/install-watcher.sh` | 감시 데몬 등록/해제/상태 |
 | `scripts/migrate-quartz.mjs` | Quartz 글 이전 (1회성, 기록용으로 남김) |
+| `scripts/make-thumbs.mjs` | 분류 썸네일 SVG 생성 |
 | `scripts/fetch-pretendard.sh` | 폰트 버전 올릴 때만 |
 
 `post.mjs` 는 커밋하지 않는다. 글을 만드는 일과 공개하는 일을 일부러 갈라놨다.

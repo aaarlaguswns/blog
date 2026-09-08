@@ -67,8 +67,12 @@ function fail(message, extra = {}) {
   process.exit(1)
 }
 
-const LABELS = JSON.parse(
-  readFileSync(join(BLOG_ROOT, "category-labels.json"), "utf8"),
+/** categories.json: { 슬러그: { label, accent, tint, ink } } */
+const CATS = JSON.parse(
+  readFileSync(join(BLOG_ROOT, "categories.json"), "utf8"),
+)
+const LABELS = Object.fromEntries(
+  Object.entries(CATS).map(([slug, meta]) => [slug, meta.label]),
 )
 
 /* ── 볼트 훑기 ───────────────────────────────────────────────────────── */
