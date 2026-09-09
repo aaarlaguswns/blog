@@ -1,16 +1,17 @@
 ---
 /*
- * 글 목록. 그냥 최신순으로 늘어놓지 않고 폴더 구조대로 묶어서 보여준다.
- * 어떤 분류가 있는지가 한눈에 들어와야 하기 때문이다.
+ * 글 목록. 분류에 상관없이 최신순으로 전부 늘어놓는다.
+ *
+ * 갈래별로 보고 싶으면 /categories 로 간다. 여기서까지 분류별로 접어 보여주면
+ * 두 페이지가 같은 일을 하게 되고, 어느 쪽도 제 역할을 못 한다.
  */
 import BlogCard from "@/components/BlogCard.astro"
-import CategorySection from "@/components/CategorySection.astro"
 import MetaPage from "@/components/MetaPage.astro"
 import Layout from "@/layouts/Layout.astro"
 import { getCategoryTree, getPosts } from "@/lib/content"
 
-const { roots, loose } = await getCategoryTree()
 const posts = await getPosts()
+const { roots } = await getCategoryTree()
 ---
 
 <Layout>
@@ -19,35 +20,22 @@ const posts = await getPosts()
   <page-head>
     <h1>글</h1>
     <p>
-      전체 {posts.length}개
-      {roots.length > 0 && ` · 분류 ${roots.length}개`}
+      전체 {posts.length}개.
+      {roots.length > 0 && (
+        <>갈래별로 보려면 <a href="/categories">분류</a>로.</>
+      )}
     </p>
   </page-head>
 
-  {roots.length > 0 && (
-      <category-jump>
-        {roots.map((root) => (
-          <a href={`/blog/${root.path}`}>
-            <span>{root.label}</span>
-            <em>{root.total}</em>
-          </a>
-        ))}
-      </category-jump>
-    )}
-
-  {loose.length > 0 && (
-      <ul data-loose>
-        {loose.map((post) => <BlogCard post={post} />)}
-      </ul>
-    )}
-
-  {roots.map((root) => <CategorySection node={root} />)}
+  <ul>
+    {posts.map((post) => <BlogCard post={post} />)}
+  </ul>
 </Layout>
 
 <style>
   page-head {
     display: block;
-    margin-block-end: var(--space-s);
+    margin-block-end: var(--space-m);
 
     h1 {
       font-size: var(--step-2);
@@ -62,38 +50,9 @@ const posts = await getPosts()
     }
   }
 
-  category-jump {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2xs);
-    margin-block-end: var(--space-l);
-
-    a {
-      --underline: transparent;
-
-      display: inline-flex;
-      align-items: baseline;
-      gap: var(--space-3xs);
-      padding: var(--space-3xs) var(--space-xs);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      font-size: var(--step--1);
-
-      &:hover {
-        border-color: var(--foreground);
-      }
-
-      em {
-        font-style: normal;
-        color: var(--muted-foreground);
-      }
-    }
-  }
-
-  ul[data-loose] {
+  ul {
     display: flex;
     flex-direction: column;
     gap: var(--space-m);
-    margin-block-end: var(--space-l);
   }
 </style>

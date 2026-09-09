@@ -15,6 +15,8 @@ export const SITE = {
 
 export const NAVIGATION = [
   { href: "/blog", label: "글" },
+  // 분류는 태그와 별개인 두 번째 축이다. 폴더 하나 = 분류 하나.
+  { href: "/categories", label: "분류" },
   { href: "/tags", label: "태그" },
 ]
 

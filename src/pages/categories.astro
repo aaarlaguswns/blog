@@ -1,0 +1,163 @@
+---
+/*
+ * 분류 목록. 글이 아니라 "갈래"만 보여주는 페이지다.
+ *
+ * 태그와 별개인 두 번째 분류 축이다. 태그는 글에 여러 개 붙는 잔 꼬리표라면,
+ * 분류는 글이 실제로 사는 폴더 하나다. 그래서 여기서는 글을 늘어놓지 않고
+ * 갈래만 크게 보여주고, 눌러 들어가야 그 안의 글이 나온다.
+ */
+import MetaPage from "@/components/MetaPage.astro"
+import Layout from "@/layouts/Layout.astro"
+import { getCategoryTree, getPosts } from "@/lib/content"
+import { CATEGORIES } from "@/consts"
+
+const { roots } = await getCategoryTree()
+const posts = await getPosts()
+
+const thumbOf = (path: string) =>
+  CATEGORIES[path] ? `/thumbs/${path.replace(/\//g, "-")}.svg` : null
+
+const accentOf = (path: string) => {
+  const a = CATEGORIES[path]?.accent
+  return a ? `--cat: light-dark(${a[0]}, ${a[1]})` : undefined
+}
+---
+
+<Layout crumbs={[{ label: "분류", href: "/categories" }]}>
+  <MetaPage slot="head" title="분류" />
+
+  <page-head>
+    <h1>분류</h1>
+    <p>글 {posts.length}개가 {roots.length}개 갈래에 담겨 있다. 눌러서 들어가면 그 안의 글이 나온다.</p>
+  </page-head>
+
+  <category-grid>
+    {roots.map((root) => (
+      <article style={accentOf(root.path)}>
+        <a data-cover href={`/blog/${root.path}`} tabindex="-1" aria-hidden="true">
+          {thumbOf(root.path) && (
+            <img src={thumbOf(root.path)} alt="" width="640" height="336" loading="lazy" decoding="async" />
+          )}
+        </a>
+        <category-body>
+          <a data-name href={`/blog/${root.path}`}>
+            {root.label}<em>{root.total}</em>
+          </a>
+          {root.children.length > 0 && (
+            <category-subs>
+              {root.children.map((child) => (
+                <a href={`/blog/${child.path}`}>
+                  {child.label}<span>{child.total}</span>
+                </a>
+              ))}
+            </category-subs>
+          )}
+        </category-body>
+      </article>
+    ))}
+  </category-grid>
+</Layout>
+
+<style>
+  page-head {
+    display: block;
+    margin-block-end: var(--space-m);
+
+    h1 {
+      font-size: var(--step-2);
+      line-height: calc(var(--leading-offset) + 1em);
+      font-weight: var(--font-weight-medium);
+    }
+
+    p {
+      margin-block-start: var(--space-3xs);
+      font-size: var(--step--1);
+      color: var(--muted-foreground);
+    }
+  }
+
+  category-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-m);
+
+    @media (width < 40rem) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  article {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md, 10px);
+    overflow: hidden;
+    transition: border-color 0.15s;
+
+    &:hover {
+      border-color: var(--cat, var(--foreground));
+    }
+  }
+
+  [data-cover] {
+    display: block;
+    background-color: var(--muted);
+
+    img {
+      display: block;
+      inline-size: 100%;
+      block-size: auto;
+    }
+  }
+
+  category-body {
+    display: block;
+    padding: var(--space-xs) var(--space-s) var(--space-s);
+  }
+
+  [data-name] {
+    --underline: transparent;
+
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2xs);
+    font-size: var(--step-1);
+    font-weight: var(--font-weight-medium);
+    color: var(--cat, var(--foreground));
+
+    em {
+      font-style: normal;
+      font-size: var(--step--1);
+      font-weight: var(--font-weight-normal);
+      color: var(--muted-foreground);
+    }
+  }
+
+  category-subs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3xs);
+    margin-block-start: var(--space-xs);
+
+    a {
+      --underline: transparent;
+
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.35em;
+      padding: 0.15em 0.6em;
+      border-radius: 999px;
+      font-size: var(--step--1);
+      color: var(--muted-foreground);
+      background-color: var(--muted);
+
+      &:hover {
+        color: var(--foreground);
+      }
+
+      span {
+        opacity: 0.6;
+      }
+    }
+  }
+</style>

@@ -5,7 +5,7 @@
  * 분류를 태그보다 크게 보여주는 것이 이 카드의 요점이다.
  *   · 색이 들어간 배지 = 최상위 분류 (Algorithm, JavaScript …)
  *   · 그 옆 옅은 배지 = 세부 분류 (Binary Search …), 있을 때만
- *   · 오른쪽 썸네일   = 세부 분류의 그림. 글에 대표 이미지가 있으면 그게 우선
+ * 둘 다 눌러서 그 분류의 글 목록으로 갈 수 있다.
  * 태그는 예전처럼 아래쪽에 작게 남는다.
  */
 import { formatDate } from "@/lib/utils"
@@ -55,15 +55,16 @@ const accentStyle = cat?.accent
     </entry-meta>
   </entry-info>
 
-  {post.data.image ? (
+  {/*
+    글마다 썸네일을 붙이지 않는다. 목록이 그림 벽이 되면 제목이 안 읽힌다.
+    분류를 알아보는 그림은 /categories 의 분류 카드가 맡는다.
+    글 자신의 대표 이미지가 있을 때만 예외로 보여준다.
+  */}
+  {post.data.image && (
       <a data-thumb href={href} tabindex="-1" aria-hidden="true">
         <Image src={post.data.image} alt="" width={640} height={336} />
       </a>
-    ) : cat?.thumb ? (
-      <a data-thumb href={href} tabindex="-1" aria-hidden="true">
-        <img src={cat.thumb} alt="" width="640" height="336" loading="lazy" decoding="async" />
-      </a>
-    ) : null}
+    )}
 </li>
 
 <style>
