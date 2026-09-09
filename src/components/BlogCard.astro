@@ -49,7 +49,9 @@ const accentStyle = cat?.accent
       </time>
       {post.data.tags && post.data.tags.length > 0 && (
         <entry-tags>
-          {post.data.tags.map((tag) => <span>#{tag}</span>)}
+          {post.data.tags.map((tag) => (
+            <a href={`/tags/${tag}`}>#{tag}</a>
+          ))}
         </entry-tags>
       )}
     </entry-meta>
@@ -148,9 +150,19 @@ const accentStyle = cat?.accent
     color: color-mix(in oklab, var(--muted-foreground) 75%, transparent);
 
     entry-tags {
+      --underline: transparent;
+
       display: flex;
       flex-wrap: wrap;
       gap: var(--space-3xs);
+
+      a {
+        color: inherit;
+
+        &:hover {
+          color: var(--foreground);
+        }
+      }
     }
 
     time ~ entry-tags::before {
