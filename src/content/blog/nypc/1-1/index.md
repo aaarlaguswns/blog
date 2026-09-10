@@ -2,6 +2,8 @@
 title: NYPC 1-1
 description: Python 코드
 date: 2025-12-06T08:11:00.000Z
+tags:
+  - Python
 source: obsidian
 ---
 

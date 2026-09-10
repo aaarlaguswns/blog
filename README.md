@@ -57,7 +57,11 @@ src/content/blog/algorithm/binary-search/1920/index.md
 | `/categories` | 갈래만 크게 보여준다. 눌러 들어가면 그 안의 글 |
 | `/blog` | 분류 상관없이 최신순 전체 목록 |
 | `/blog/<분류>` | 그 분류의 글 (하위 분류 글까지 펼침) |
-| `/tags` | 태그 |
+| `/tags` | 태그. 태그를 단 글이 하나라도 있으면 자동으로 채워진다 |
+
+태그는 `tags: [이분탐색, 삽질]` 처럼 frontmatter 에 쓰면 그만이다. 태그 페이지도
+목록도 알아서 생긴다. 분류와 겹치는 태그는 달지 않는다 — JavaScript 분류의 글에
+`#JavaScript` 를 붙이면 같은 말을 두 번 하는 것이다.
 
 목록 카드에는 분류 배지가 붙는다. 색이 들어간 쪽이 최상위 분류, 옆의 옅은 쪽이
 세부 분류이고 둘 다 눌러 들어갈 수 있다. 글마다 썸네일은 붙이지 않는다 —
@@ -112,6 +116,7 @@ source: obsidian       # 볼트에서 온 글이라는 표시 (자동)
 | `scripts/install-watcher.sh` | 감시 데몬 등록/해제/상태 |
 | `scripts/migrate-quartz.mjs` | Quartz 글 이전 (1회성, 기록용으로 남김) |
 | `scripts/make-thumbs.mjs` | 분류 썸네일 SVG 생성 |
+| `scripts/tag-languages.mjs` | 코드 언어를 태그로 달아준다 (볼트를 고침) |
 | `scripts/fetch-pretendard.sh` | 폰트 버전 올릴 때만 |
 
 `post.mjs` 는 커밋하지 않는다. 글을 만드는 일과 공개하는 일을 일부러 갈라놨다.

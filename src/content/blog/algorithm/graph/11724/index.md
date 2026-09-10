@@ -2,6 +2,8 @@
 title: Graph 11724
 description: C++ 코드
 date: 2025-12-06T10:38:09.000Z
+tags:
+  - C++
 source: obsidian
 ---
 
