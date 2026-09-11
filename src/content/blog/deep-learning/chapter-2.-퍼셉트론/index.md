@@ -26,7 +26,7 @@ source: obsidian
 
 ## 2-3. 퍼셉트론 구현하기
 
-and 게이트 구현
+ AND게이트 구현
 ```python
 def AND (x1, x2):
 
