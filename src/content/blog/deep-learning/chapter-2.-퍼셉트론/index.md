@@ -7,4 +7,4 @@ tags:
 source: obsidian
 ---
 
-
+퍼셉트론이란?
