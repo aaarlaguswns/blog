@@ -1,6 +1,6 @@
 ---
 title: Chapter 2.  퍼셉트론
-description: 과제
+description: 2장
 date: 2026-09-11T04:42:34.732Z
 tags:
   - Python
