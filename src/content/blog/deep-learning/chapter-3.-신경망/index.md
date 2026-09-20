@@ -27,3 +27,5 @@ source: obsidian
 ![](<./assets/R1280x0-7 1.png>)
 
 ## 3 - 2 - 1. 시그모이드 함수
+
+![](<./assets/R1280x0-8 1.png>)
