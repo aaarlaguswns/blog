@@ -1,18 +1,12 @@
 ---
 title: Chapter 3. 신경망
-description: "--- publish: true title: Chapter 3. 신경망 description: 과제 tags: Python --"
-date: 2026-09-20T06:50:10.635Z
-source: obsidian
-draft: true
----
-
-![](<./assets/images-kimkihoon0515-post-41f70d57-3a89-4228-b60e-2412befdf960-image 4.png>)---
-publish: true
-title: Chapter 3. 신경망
 description: 과제
+date: 2026-09-20T06:50:10.635Z
 tags:
   - Python
+source: obsidian
 ---
+
 ## 3 - 1. 퍼셉트론에서 신경망으로
 
 퍼셉트론은 복잡한 함수도 표현할 수 있지만 가중치를 설정하는 작업은 여전히 사람이 수동으로 한다는 단점이 존재한다. 하지만 신경망은 가중치 매개변수의 적절한 값을 데이터로부터 자동으로 학습하는 능력을 갖추고 있다
