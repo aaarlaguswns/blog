@@ -156,3 +156,36 @@ print(y)
 ```
 
 ## 3 - 4. 출력층 설계하기
+
+신경망은 분류와 회귀 모두에 이용할 수 있다. 둘중 어떤 문제냐에 따라서 출력층에 사용하는 활성화 함수가 달라지게 된다. 일반적으로 회귀에는 항등 함수를, 분류에는 소프트맥트 함수를 사용한다.
+
+## 3 - 4 - 1. 항등함수와 소프트맥스 함수
+
+항등함수는 입력을 그래도 출력한다 그래서 출력층에서 항등함수를 사용하면 입력 신호가 그대로 출력되게 된다
+
+분류에서 사용하는 소프트맥스 함수의 식은 아래와 같다
+
+![](<./assets/images-kimkihoon0515-post-838c79a6-6cf1-46ac-8a2b-23b3f2921e16-image 1.png>)
+
+그림으로 나타내면 다음과 같다
+
+![](<./assets/images-kimkihoon0515-post-8df3e535-3530-4189-ac0d-2eaae2b39b28-image 1.png>)
+
+```Python
+import numpy as np
+
+def softmax(a):
+    c = np.max(a)
+    exp_a = np.exp(a-c)
+    sum_exp_a = np.sum(exp_a)
+    y = exp_a / sum_exp_a
+    return y
+
+a = np.array([0.3,2.9,4.0])
+y = softmax(a)
+print(y)
+sum = np.sum(y)
+print(sum)
+```
+
+## 내 생각
