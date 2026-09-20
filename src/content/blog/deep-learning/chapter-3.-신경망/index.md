@@ -34,14 +34,20 @@ source: obsidian
 
 ## 3 - 2 - 2. 함수 구현하기
 
+시그모이드 함수구현
+
 ```python
-```null
 import numpy as np
+import matplotlib.pylab as plt
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
-x = np.array([-1.0,1.0,2.0])
-print(sigmoid(x))
+x = np.arange(-5.0,5.0,0.1)
+y = sigmoid(x)
+plt.plot(x, y)
+plt.ylim(-0.1, 1.1)
+plt.show()
 ```
-```
+
+![](<./assets/images-kimkihoon0515-post-e8ec0243-6a3e-4de1-b538-acd0678f725a-image 1.png>)
