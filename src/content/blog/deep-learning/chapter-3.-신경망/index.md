@@ -94,3 +94,19 @@ print(Y)
 행렬의 곱을 이용하여 1층의 가중치 부분을 간소화 할수 있고 행렬을 각각 정리해보면
 
 ![](<./assets/images-kimkihoon0515-post-41f70d57-3a89-4228-b60e-2412befdf960-image 5.png>)
+
+이렇게 정리가 되고 다차원 배열의 곱셈을 이용하여 a를 구하는 코드는 아래와 같다
+```python
+import numpy as np
+
+X = np.array([1.0,0.5])
+W1 = np.array([[0.1,0.3,0.5],[0.2,0.4,0.6]])
+B1 = np.array([0.1,0.2,0.3])
+
+A1 = np.dot(X,W1) + B1
+print(A1)
+```
+
+이때 1층의 활성화 함수에서의 처리는 다음과 같이된다
+
+![](<./assets/images-kimkihoon0515-post-dce4584b-3952-4877-bcc7-86ed6bfe9e89-image 1.png>)
