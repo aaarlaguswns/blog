@@ -33,3 +33,15 @@ source: obsidian
 ![](<./assets/R1280x0-8 1.png>)
 
 ## 3 - 2 - 2. 함수 구현하기
+
+```python
+```null
+import numpy as np
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+x = np.array([-1.0,1.0,2.0])
+print(sigmoid(x))
+```
+```
