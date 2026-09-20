@@ -110,3 +110,11 @@ print(A1)
 이때 1층의 활성화 함수에서의 처리는 다음과 같이된다
 
 ![](<./assets/images-kimkihoon0515-post-dce4584b-3952-4877-bcc7-86ed6bfe9e89-image 1.png>)
+
+은닉층에서의 가중치 합을 a로 표기하고 활성화 함수 h()로 변환된 신호를 z로 표기한다. 여기에서는 활성화 함수로 시그모이드 함수를 사용한다
+
+![](<./assets/images-kimkihoon0515-post-961ecc20-5fe8-4ce9-9ed7-5f35e022dab9-image 1.png>)
+
+1층에서 2층은 방금전 구현에서 1층의 출력 Z1이 2층의 입력이 된다는 점을 제외하면 똑같다
+
+![](<./assets/images-kimkihoon0515-post-2d89fa29-1257-46b8-a502-fbbaa876b453-image 1.png>)
