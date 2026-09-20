@@ -1,12 +1,18 @@
 ---
 title: Chapter 3. 신경망
-description: 과제
+description: "--- publish: true title: Chapter 3. 신경망 description: 과제 tags: Python --"
 date: 2026-09-20T06:50:10.635Z
-tags:
-  - Python
 source: obsidian
+draft: true
 ---
 
+![](<./assets/images-kimkihoon0515-post-41f70d57-3a89-4228-b60e-2412befdf960-image 4.png>)---
+publish: true
+title: Chapter 3. 신경망
+description: 과제
+tags:
+  - Python
+---
 ## 3 - 1. 퍼셉트론에서 신경망으로
 
 퍼셉트론은 복잡한 함수도 표현할 수 있지만 가중치를 설정하는 작업은 여전히 사람이 수동으로 한다는 단점이 존재한다. 하지만 신경망은 가중치 매개변수의 적절한 값을 데이터로부터 자동으로 학습하는 능력을 갖추고 있다
@@ -61,3 +67,30 @@ plt.show()
 ![](<./assets/images-kimkihoon0515-post-36ad8584-71a4-46d5-b60e-98ef7d1a4e29-image 1.png>)
 
 ## 3 - 3. 3층 신경망 구현하기
+
+![](<./assets/images-kimkihoon0515-post-2503790e-ba66-4165-a491-2c6630421f99-image 1.png>)
+
+넘파이 행렬을 통해 신경망을 구현
+
+코드로 나타내면 다음과 같다
+
+```python
+import numpy as np
+
+X = np.array([1,2])
+W = np.array([[1,3,5],[2,4,6]])
+Y = np.dot(X,W) # 행렬의 곱
+print(Y)
+```
+
+이를 기반으로 입력층에서 1층으로 신호가 전달되는 것을 그림으로 나타냄
+
+![](<./assets/images-kimkihoon0515-post-d86d384d-69f7-46bf-ad7b-ecf8705ce245-image 1.png>)
+
+1층의 a를 식으로 나타내면 아래와 같다
+
+![](<./assets/images-kimkihoon0515-post-8cfdb23a-b277-4fde-b0b3-c63b9c648663-image 1.png>)
+
+행렬의 곱을 이용하여 1층의 가중치 부분을 간소화 할수 있고 행렬을 각각 정리해보면
+
+![](<./assets/images-kimkihoon0515-post-41f70d57-3a89-4228-b60e-2412befdf960-image 5.png>)
