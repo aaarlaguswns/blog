@@ -202,3 +202,5 @@ def f(W):
 dW = numerical_gradient(f, net.W)
 print(dW)
 ```
+
+## 내 생각
