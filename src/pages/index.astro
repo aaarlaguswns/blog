@@ -1,5 +1,6 @@
 ---
 import BlogCard from "@/components/BlogCard.astro"
+import ParticleTitle from "@/components/ParticleTitle.astro"
 import MetaPage from "@/components/MetaPage.astro"
 import Layout from "@/layouts/Layout.astro"
 import { getPosts } from "@/lib/content"
@@ -14,7 +15,7 @@ const hasMore = posts.length > recent.length
   <MetaPage slot="head" />
 
   <site-intro>
-    <h1>{SITE.title}</h1>
+    <ParticleTitle text={SITE.title} />
     {/*
       TODO: 자기소개 — 이 두 문단은 자리만 잡아둔 것이니 본인 말로 고쳐 쓸 것.
       텔레그램에서 "블로그 소개글 이렇게 바꿔줘" 라고 해도 여기를 고친다.
@@ -53,12 +54,8 @@ const hasMore = posts.length > recent.length
       margin-block-start: -0.2em;
     }
 
-    h1 {
-      font-size: var(--step-2);
-      line-height: calc(var(--leading-offset) + 1em);
-      font-weight: var(--font-weight-medium);
-      color: var(--foreground);
-      margin-block-end: var(--space-2xs);
+    particle-title {
+      margin-block-end: var(--space-xs);
     }
 
     prose-content {

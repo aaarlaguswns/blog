@@ -10,7 +10,7 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
-import { basename, extname, join, relative, sep } from "node:path"
+import { extname, join, relative, sep } from "node:path"
 import { readdirSync } from "node:fs"
 import { VAULT_BLOG_DIR } from "./lib/config.mjs"
 import { parseFrontmatter, stringifyFrontmatter, slugify } from "./lib/markdown.mjs"

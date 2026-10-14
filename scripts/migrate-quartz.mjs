@@ -18,7 +18,7 @@
  */
 
 import { execFileSync } from "node:child_process"
-import { existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs"
+import { mkdirSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
 import { BLOG_ROOT, POSTS_DIR } from "./lib/config.mjs"
 import {

@@ -89,7 +89,7 @@ const crumbs = post
 
 {
   post && Content ? (
-    <Layout crumbs={crumbs}>
+    <Layout crumbs={crumbs} graphFocus={`post:${post.id}`}>
       <MetaPost slot="head" post={post} />
       {headings.length > 0 && (
         <TableOfContents
@@ -134,7 +134,7 @@ const crumbs = post
       </article>
     </Layout>
   ) : (
-    <Layout crumbs={crumbs}>
+    <Layout crumbs={crumbs} graphFocus={`cat:${node!.path}`}>
       <MetaPage slot="head" title={node!.label} />
       <ScrollToTop floating />
       <category-head>

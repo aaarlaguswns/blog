@@ -80,6 +80,19 @@ const scenes = {
       path("M436 128 q24 0 24 26 t24 26 q-24 0 -24 26 t-24 26", ink, 10),
     ].join(""),
 
+  // 층층이 이어진 신경망: 딥러닝
+  "deep-learning": (ink, soft) => {
+    const layers = [[118, 168, 218], [96, 146, 196, 246], [138, 198]]
+    const xs = [216, 320, 424]
+    const out = []
+    for (let l = 0; l < layers.length - 1; l++)
+      for (const y1 of layers[l]) for (const y2 of layers[l + 1])
+        out.push(line(xs[l], y1, xs[l + 1], y2, ink, 3, 0.28))
+    layers.forEach((ys, l) =>
+      ys.forEach((y, i) => out.push(circle(xs[l], y, 16, (l + i) % 2 ? soft : ink))))
+    return out.join("")
+  },
+
   // 노드와 간선: 일반 알고리즘
   algorithm: (ink, soft) =>
     [

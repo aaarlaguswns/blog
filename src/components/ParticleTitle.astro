@@ -1,0 +1,333 @@
+---
+/*
+ * 홈 첫 화면의 도트 제목.
+ *
+ * 글자를 격자 단위로 쪼갠 사각 도트로 그린다. 마우스(손가락)를 대면 그 둘레의
+ * 도트가 렌즈로 들여다보듯 커지면서 바깥으로 밀려나고, 색이 물들었다가 놓으면
+ * 스프링처럼 제자리로 돌아온다. 처음 들어오면 흩어진 도트가 모여 글자가 된다.
+ *
+ * 진짜 <h1> 은 그대로 둔다 (검색엔진·화면낭독기용). 캔버스가 준비되면 h1 은
+ * 눈에서만 숨긴다. 스크립트가 안 돌면 평범한 제목으로 보인다.
+ */
+type Props = { text: string }
+
+const { text } = Astro.props
+---
+
+<particle-title>
+  <h1>{text}</h1>
+  <canvas aria-hidden="true"></canvas>
+</particle-title>
+
+<script>
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches
+
+  /*
+   * 렌즈 속 색. 글자 왼쪽에서 오른쪽으로 분류 색(초록 → 파랑 → 보라)이 흐른다.
+   * [라이트, 다크] 쌍. categories.json 의 Algorithm·JavaScript·NYPC 색과 같은 계열이다.
+   */
+  const LENS_STOPS: [string, string][] = [
+    ["#047857", "#6ee7b7"],
+    ["#1d4ed8", "#93c5fd"],
+    ["#6d28d9", "#c4b5fd"],
+  ]
+  const PALETTE_STEPS = 32
+
+  const isDark = () => {
+    const t = document.documentElement.dataset.theme
+    return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches
+  }
+
+  const hexToRgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
+  const mixHex = (a: string, b: string, t: number) => {
+    const [ar, ag, ab] = hexToRgb(a)
+    const [br, bg, bb] = hexToRgb(b)
+    const c = (x: number, y: number) => Math.round(x + (y - x) * t)
+    return `rgb(${c(ar, br)} ${c(ag, bg)} ${c(ab, bb)})`
+  }
+
+  class DotTitle {
+    private ctx: CanvasRenderingContext2D
+    private width = 0
+    private height = 0
+    private gap = 4
+    private size = 3
+    private radius = 80
+
+    // 도트 상태. 수천 개라 객체 대신 평평한 배열로 둔다.
+    private hx = new Float32Array(0)
+    private hy = new Float32Array(0)
+    private x = new Float32Array(0)
+    private y = new Float32Array(0)
+    private vx = new Float32Array(0)
+    private vy = new Float32Array(0)
+    private scale = new Float32Array(0)
+    private heat = new Float32Array(0)
+    private tone = new Uint8Array(0)
+
+    private fg = "#222"
+    private palette: string[] = []
+    private pointer: { x: number; y: number } | null = null
+    private raf = 0
+
+    constructor(private root: HTMLElement, private canvas: HTMLCanvasElement, private text: string) {
+      this.ctx = canvas.getContext("2d")!
+      this.readColors()
+    }
+
+    readColors() {
+      this.fg = getComputedStyle(this.root).color || "#222"
+      const dark = isDark()
+      const stops = LENS_STOPS.map((s) => (dark ? s[1] : s[0]))
+      this.palette = Array.from({ length: PALETTE_STEPS }, (_, i) => {
+        const t = (i / (PALETTE_STEPS - 1)) * (stops.length - 1)
+        const k = Math.min(stops.length - 2, Math.floor(t))
+        return mixHex(stops[k], stops[k + 1], t - k)
+      })
+      this.wake()
+    }
+
+    /** 글자를 오프스크린에 그려 격자로 훑고, 잉크가 묻은 칸마다 도트 하나 */
+    build(intro: boolean) {
+      const width = this.root.clientWidth
+      if (!width) return
+      const font = getComputedStyle(this.root.querySelector("h1")!).fontFamily
+
+      const probe = document.createElement("canvas").getContext("2d")!
+      probe.font = `700 100px ${font}`
+      const per100 = probe.measureText(this.text).width
+      const fontSize = Math.min(120, Math.max(36, (width / per100) * 100 * 0.98))
+
+      this.gap = Math.round(Math.min(6, Math.max(3, fontSize / 20)))
+      this.size = this.gap * 0.8
+      this.radius = Math.max(60, fontSize * 0.9)
+
+      const textHeight = Math.ceil(fontSize * 1.18)
+      /*
+       * 렌즈가 밀어낸 도트가 캔버스 경계에서 잘리지 않게 여백을 둔다.
+       * 여백만큼 음수 마진으로 빼내서 제목이 차지하는 자리는 그대로다.
+       *  · 위아래: 넉넉하게
+       *  · 왼쪽: 페이지 가장자리 여백(가터) 안쪽까지만
+       *  · 오른쪽: 없음 — 오른쪽으로 삐져나가면 좁은 화면에서 가로 스크롤이 생긴다
+       */
+      const padY = Math.round(fontSize * 0.4)
+      const padX = Math.min(16, Math.round(fontSize * 0.25))
+      const height = textHeight + padY * 2
+      const canvasWidth = width + padX
+      this.width = canvasWidth
+      this.height = height
+
+      const off = document.createElement("canvas")
+      off.width = width
+      off.height = textHeight
+      const o = off.getContext("2d", { willReadFrequently: true })!
+      o.font = `700 ${fontSize}px ${font}`
+      o.textBaseline = "alphabetic"
+      o.fillStyle = "#000"
+      o.fillText(this.text, 0, Math.round(fontSize * 0.92))
+      const data = o.getImageData(0, 0, width, textHeight).data
+
+      const hx: number[] = [], hy: number[] = []
+      for (let py = 0; py < textHeight; py += this.gap) {
+        for (let px = 0; px < width; px += this.gap) {
+          // 칸 가운데 픽셀로 판정해야 획 가장자리가 고르게 잘린다
+          const cx = Math.min(width - 1, px + (this.gap >> 1))
+          const cy = Math.min(textHeight - 1, py + (this.gap >> 1))
+          if (data[(cy * width + cx) * 4 + 3] > 110) { hx.push(px + padX); hy.push(py + padY) }
+        }
+      }
+
+      const n = hx.length
+      this.hx = Float32Array.from(hx)
+      this.hy = Float32Array.from(hy)
+      this.x = new Float32Array(n)
+      this.y = new Float32Array(n)
+      this.vx = new Float32Array(n)
+      this.vy = new Float32Array(n)
+      this.scale = new Float32Array(n).fill(1)
+      this.heat = new Float32Array(n)
+      this.tone = new Uint8Array(n)
+
+      let minX = Infinity, maxX = -Infinity
+      for (const v of hx) { minX = Math.min(minX, v); maxX = Math.max(maxX, v) }
+
+      for (let i = 0; i < n; i++) {
+        this.tone[i] = Math.round(((hx[i] - minX) / (maxX - minX || 1)) * (PALETTE_STEPS - 1))
+        if (intro) {
+          // 처음엔 칸 전체에 흩뿌려 두었다가 제자리로 모여든다
+          this.x[i] = Math.random() * canvasWidth
+          this.y[i] = Math.random() * height
+        } else {
+          this.x[i] = hx[i]
+          this.y[i] = hy[i]
+        }
+      }
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      this.canvas.width = Math.round(canvasWidth * dpr)
+      this.canvas.height = Math.round(height * dpr)
+      this.canvas.style.width = `${canvasWidth}px`
+      this.canvas.style.height = `${height}px`
+      this.canvas.style.margin = `${-padY}px 0 ${-padY}px ${-padX}px`
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+      this.root.dataset.ready = ""
+      this.wake()
+    }
+
+    setPointer(p: { x: number; y: number } | null) {
+      this.pointer = p
+      this.wake()
+    }
+
+    /** 멈춰 있던 애니메이션을 다시 돌린다. 움직일 게 없으면 알아서 멈춘다. */
+    wake() {
+      if (!this.raf) this.raf = requestAnimationFrame(this.frame)
+    }
+
+    private frame = () => {
+      this.raf = 0
+      const moving = this.step()
+      this.draw()
+      if (moving) this.raf = requestAnimationFrame(this.frame)
+    }
+
+    private step(): boolean {
+      const p = this.pointer
+      const R = this.radius
+      let energy = 0
+
+      for (let i = 0; i < this.hx.length; i++) {
+        let tx = this.hx[i], ty = this.hy[i], targetScale = 1, targetHeat = 0
+
+        if (p) {
+          const dx = this.hx[i] - p.x, dy = this.hy[i] - p.y
+          const d = Math.hypot(dx, dy)
+          if (d < R) {
+            // 렌즈: 가운데일수록 크게 부풀고 바깥으로 밀린다
+            const f = 1 - d / R
+            const push = f * f * R * 0.42
+            const inv = d > 0.001 ? 1 / d : 0
+            tx += dx * inv * push
+            ty += dy * inv * push
+            targetScale = 1 + f * 1.5
+            targetHeat = Math.min(1, f * 1.6)
+          }
+        }
+
+        // 스프링 + 감쇠
+        this.vx[i] = (this.vx[i] + (tx - this.x[i]) * 0.11) * 0.8
+        this.vy[i] = (this.vy[i] + (ty - this.y[i]) * 0.11) * 0.8
+        this.x[i] += this.vx[i]
+        this.y[i] += this.vy[i]
+        this.scale[i] += (targetScale - this.scale[i]) * 0.22
+        this.heat[i] += (targetHeat - this.heat[i]) * 0.18
+
+        energy +=
+          Math.abs(this.vx[i]) + Math.abs(this.vy[i]) +
+          Math.abs(targetScale - this.scale[i]) * 10 + Math.abs(targetHeat - this.heat[i]) * 10
+      }
+      // 손을 올려둔 채 가만히 있으면 여기서 멈춘다. 다시 움직이면 pointermove 가 깨운다.
+      return energy > 0.05 * Math.max(1, this.hx.length / 100)
+    }
+
+    private draw() {
+      const { ctx } = this
+      ctx.clearRect(0, 0, this.width, this.height)
+
+      // 평상시 도트는 한 번에 같은 색으로
+      ctx.fillStyle = this.fg
+      for (let i = 0; i < this.hx.length; i++) {
+        if (this.heat[i] > 0.04) continue
+        const s = this.size * this.scale[i]
+        ctx.fillRect(this.x[i] - s / 2, this.y[i] - s / 2, s, s)
+      }
+
+      // 렌즈에 걸린 도트는 색을 입혀 따로
+      for (let i = 0; i < this.hx.length; i++) {
+        const h = this.heat[i]
+        if (h <= 0.04) continue
+        const s = this.size * this.scale[i]
+        ctx.globalAlpha = 0.55 + h * 0.45
+        ctx.fillStyle = this.palette[this.tone[i]]
+        ctx.fillRect(this.x[i] - s / 2, this.y[i] - s / 2, s, s)
+      }
+      ctx.globalAlpha = 1
+    }
+  }
+
+  async function init(root: HTMLElement) {
+    const canvas = root.querySelector("canvas")!
+    const text = root.querySelector("h1")!.textContent?.trim() ?? ""
+    if (!text) return
+
+    // 글꼴이 다 내려와야 획 모양이 맞게 잡힌다
+    await document.fonts.ready
+    const title = new DotTitle(root, canvas, text)
+    title.build(!reduceMotion)
+
+    const local = (e: PointerEvent) => {
+      const r = canvas.getBoundingClientRect()
+      return { x: e.clientX - r.left, y: e.clientY - r.top }
+    }
+    canvas.addEventListener("pointermove", (e) => title.setPointer(local(e)))
+    canvas.addEventListener("pointerdown", (e) => title.setPointer(local(e)))
+    canvas.addEventListener("pointerleave", () => title.setPointer(null))
+    canvas.addEventListener("pointercancel", () => title.setPointer(null))
+    canvas.addEventListener("pointerup", (e) => {
+      if (e.pointerType !== "mouse") title.setPointer(null)
+    })
+
+    let lastWidth = root.clientWidth
+    new ResizeObserver(() => {
+      if (Math.abs(root.clientWidth - lastWidth) < 4) return
+      lastWidth = root.clientWidth
+      title.build(false)
+    }).observe(root)
+
+    new MutationObserver(() => title.readColors()).observe(document.documentElement, {
+      attributes: true, attributeFilter: ["data-theme"],
+    })
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => title.readColors())
+  }
+
+  for (const el of document.querySelectorAll<HTMLElement>("particle-title")) init(el)
+</script>
+
+<style>
+  particle-title {
+    display: block;
+    position: relative;
+    color: var(--foreground);
+
+    h1 {
+      font-size: var(--step-2);
+      line-height: calc(var(--leading-offset) + 1em);
+      font-weight: var(--font-weight-medium);
+      color: var(--foreground);
+    }
+
+    canvas {
+      display: none;
+      inline-size: 100%;
+      touch-action: pan-y;
+      cursor: crosshair;
+    }
+
+    /* 캔버스가 준비되면 h1 은 눈에서만 숨긴다 — 검색엔진과 화면낭독기는 계속 읽는다 */
+    &[data-ready] {
+      h1 {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      canvas {
+        display: block;
+      }
+    }
+  }
+</style>

@@ -63,3 +63,17 @@ html {
     }
   }
 }
+
+/*
+ * 오른쪽 그래프 뷰. 목차는 이 높이만큼 위로 줄어든다.
+ * (TableOfContents 와 Layout 의 page-toc 이 --aside-graph-space 를 읽는다)
+ */
+:root {
+  --graph-height: clamp(13rem, 34vh, 20rem);
+}
+
+@media screen and (width >= 64rem) {
+  html:has(page-graph) {
+    --aside-graph-space: calc(var(--graph-height) + var(--space-s));
+  }
+}

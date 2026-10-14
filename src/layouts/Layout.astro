@@ -18,13 +18,21 @@ import "@/styles/shape.css"
 import "@/styles/korean.css"
 
 import Footer from "@/components/Footer.astro"
+import GraphView from "@/components/GraphView.astro"
 import MetaHead from "@/components/MetaHead.astro"
 import Sidebar from "@/components/Sidebar.astro"
 import { SITE } from "@/consts"
 
-type Props = { crumbs?: { label: string; href: string }[] }
+type Props = {
+  crumbs?: { label: string; href: string }[]
+  /**
+   * 오른쪽 그래프 뷰의 초점. 주면 그 노드 주변만 보여주고("post:<글 id>", "cat:<분류>"),
+   * 안 주면 전체 그래프. false 면 그래프를 아예 그리지 않는다.
+   */
+  graphFocus?: string | false
+}
 
-const { crumbs } = Astro.props
+const { crumbs, graphFocus } = Astro.props
 ---
 
 <html lang={SITE.locale} dir={SITE.dir}>
@@ -47,6 +55,11 @@ const { crumbs } = Astro.props
         <main><slot /></main>
         <page-footer><Footer /></page-footer>
       </page-content>
+      {graphFocus !== false && (
+          <page-graph>
+            <GraphView focus={graphFocus || undefined} />
+          </page-graph>
+        )}
     </page-grid>
   </body>
 </html>
@@ -107,9 +120,28 @@ const { crumbs } = Astro.props
 
     @media screen and (width >= 64rem) {
       position: fixed;
-      inset-block: var(--page-offset-top) var(--page-offset-bottom);
+      inset-block: var(--page-offset-top)
+        calc(var(--page-offset-bottom) + var(--aside-graph-space, 0px));
       inset-inline-end: var(--grid-edge);
       width: calc(3 * var(--grid-column-width) + 2 * var(--grid-gutter));
+    }
+  }
+
+  /*
+   * 그래프 뷰는 오른쪽 칸 맨 아래에 붙는다. 목차가 있으면 그 밑, 없으면 혼자.
+   * 좁은 화면에서는 오른쪽 칸 자체가 없으므로 그리지 않는다.
+   */
+  page-graph {
+    display: none;
+
+    @media screen and (width >= 64rem) {
+      display: block;
+      position: fixed;
+      inset-inline-end: var(--grid-edge);
+      inset-block-end: var(--page-offset-bottom);
+      width: calc(3 * var(--grid-column-width) + 2 * var(--grid-gutter));
+      height: var(--graph-height);
+      z-index: 1;
     }
   }
 
