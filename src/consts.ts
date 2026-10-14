@@ -5,12 +5,13 @@ import RSS from "@/assets/icons/rss.svg"
 
 export const SITE = {
   title: "aaarlaguswns",
-  description: "기록해두지 않으면 사라지는 것들.",
+  // 검색결과·링크 미리보기에 뜨는 한 줄. 본인 말로 바꿔도 된다.
+  description: "알고리즘, JavaScript, 딥러닝을 공부하며 남기는 기록.",
   author: "aaarlaguswns",
   locale: "ko-KR",
   dir: "ltr",
-  defaultPageImage: "/static/opengraph-image.png",
-  defaultPostImage: "/static/1200x630.png",
+  defaultPageImage: "/static/og.png",
+  defaultPostImage: "/static/og.png",
 } as const
 
 export const NAVIGATION = [

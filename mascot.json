@@ -1,0 +1,28 @@
+{
+  "_comment": "블로그 마스코트 펭귄. 아이콘(scripts/make-icons.py)과 404 페이지가 둘 다 이걸 읽는다. 고친 뒤 python3 scripts/make-icons.py",
+  "pixels": [
+    ".......K........",
+    "......KKK.......",
+    "....KKKKKKKK....",
+    "...KKKKKKKKKK...",
+    "..KKKWWKKWWKKK..",
+    "..KKWWWWWWWWKK..",
+    ".KKWWEWWWWEWWKK.",
+    ".KKWWWWOOWWWWKK.",
+    ".KKWCWOOOOWCWKK.",
+    "KKKKWWWWWWWWKKKK",
+    "KKKWWWWWWWWWWKKK",
+    ".KKWWWWWWWWWWKK.",
+    "..KWWWWWWWWWWK..",
+    "..KKWWWWWWWWKK..",
+    "...KKKKKKKKKK...",
+    "...OOO....OOO..."
+  ],
+  "colors": {
+    "K": "#2b3a55",
+    "W": "#ffffff",
+    "E": "#111827",
+    "O": "#f59e0b",
+    "C": "#fda4af"
+  }
+}

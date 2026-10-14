@@ -100,9 +100,10 @@ const section = NAVIGATION.find(
       color: var(--foreground);
       text-decoration-line: none;
 
+      /* 16×16 도트 펭귄. 24px(=도트 하나에 1.5px, 레티나에선 정확히 3px)이라야 뭉개지지 않는다 */
       svg {
-        inline-size: 1.125rem;
-        block-size: 1.125rem;
+        inline-size: 1.5rem;
+        block-size: 1.5rem;
         flex-shrink: 0;
       }
 

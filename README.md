@@ -94,6 +94,16 @@ node scripts/make-thumbs.mjs
   데이터는 빌드 때 `src/pages/graph.json.ts` 가 만든다. 글·분류·태그가 점이고,
   글끼리의 링크, 글→분류, 글→태그(점선)가 선이다. 좁은 화면에서는 보이지 않는다.
 
+## 마스코트
+
+탭 아이콘·사이드바 로고·링크 공유 미리보기·404 페이지의 펭귄은 전부 `mascot.json`
+(16×16 도트) 하나에서 나온다. 핑구에서 느낌만 빌린 오리지널 캐릭터다.
+
+```bash
+# mascot.json 을 고친 뒤 (Pillow, fontTools 필요)
+python3 scripts/make-icons.py
+```
+
 ## frontmatter
 
 ```yaml

@@ -1,12 +1,109 @@
 ---
+/*
+ * 없는 주소로 들어왔을 때.
+ *
+ * 마스코트 펭귄을 아스키아트로 보여준다. 탭 아이콘과 같은 원본(mascot.json)에서
+ * 도트 한 칸을 글자 두 개로 바꿔 그리므로 모양이 어긋날 일이 없다.
+ * (고정폭 글자는 세로로 길어서, 한 칸에 두 글자를 써야 정사각형에 가까워진다)
+ */
 import MetaPage from "@/components/MetaPage.astro"
 import Layout from "@/layouts/Layout.astro"
+import mascot from "../../mascot.json"
+
+const GLYPHS: Record<string, string> = {
+  K: "##", // 몸
+  W: "::", // 배·얼굴
+  E: "@@", // 눈
+  O: "==", // 부리·발
+  C: "**", // 볼
+}
+
+const art = mascot.pixels
+  .map((row) =>
+    [...row]
+      .map((ch) => (GLYPHS[ch] ? `<i data-c="${ch}">${GLYPHS[ch]}</i>` : "  "))
+      .join(""),
+  )
+  .join("\n")
 ---
 
 <Layout crumbs={[{ label: "404", href: "/404" }]}>
-  <MetaPage slot="head" title="404" />
-  <prose-content>
+  <MetaPage slot="head" title="404" noindex />
+  <lost-page>
+    <pre aria-hidden="true" set:html={art} />
     <h1>404</h1>
-    <p>This page does not exist.</p>
-  </prose-content>
+    <p>여기엔 아무것도 없다. 주소가 바뀌었거나 내려간 글일 수 있다.</p>
+    <nav>
+      <a href="/">홈</a>
+      <a href="/blog">글 목록</a>
+      <a href="/categories">분류</a>
+    </nav>
+  </lost-page>
 </Layout>
+
+<style>
+  lost-page {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2xs);
+  }
+
+  pre {
+    margin-block-end: var(--space-s);
+    font-family: var(--font-mono);
+    font-size: clamp(0.5rem, 1.6vw, 0.8rem);
+    line-height: 1.05;
+    letter-spacing: 0;
+    user-select: none;
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation: waddle 2.4s ease-in-out infinite;
+      transform-origin: 50% 100%;
+    }
+
+    :global(i) {
+      font-style: normal;
+    }
+
+    /* 라이트·다크 어느 쪽에서도 보이게 몸통은 글자색을 따른다 */
+    :global(i[data-c="K"]),
+    :global(i[data-c="E"]) {
+      color: var(--foreground);
+    }
+
+    :global(i[data-c="W"]) {
+      color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
+    }
+
+    :global(i[data-c="O"]) {
+      color: light-dark(#d97706, #fbbf24);
+    }
+
+    :global(i[data-c="C"]) {
+      color: light-dark(#e11d48, #fda4af);
+    }
+  }
+
+  /* 뒤뚱뒤뚱 */
+  @keyframes waddle {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+
+  h1 {
+    font-size: var(--step-3);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.1;
+  }
+
+  p {
+    color: var(--muted-foreground);
+  }
+
+  nav {
+    display: flex;
+    gap: var(--space-s);
+    margin-block-start: var(--space-xs);
+  }
+</style>

@@ -1,6 +1,6 @@
 {
-  "name": "astro-erudite",
-  "short_name": "astro-erudite",
+  "name": "aaarlaguswns",
+  "short_name": "aaarlaguswns",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -15,7 +15,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
+  "theme_color": "#e0f2fe",
+  "background_color": "#e0f2fe",
   "display": "standalone"
 }
