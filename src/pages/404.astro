@@ -2,25 +2,23 @@
 /*
  * 없는 주소로 들어왔을 때.
  *
- * 마스코트(핑구 팬아트)를 아스키아트로 보여준다. 탭 아이콘과 같은 원본(mascot.json)에서
- * 도트 한 칸을 글자 두 개로 바꿔 그리므로 모양이 어긋날 일이 없다.
- * (고정폭 글자는 세로로 길어서, 한 칸에 두 글자를 써야 정사각형에 가까워진다)
+ * 마스코트 핑구를 아스키아트로 보여준다. 탭 아이콘과 같은 원본(mascot.png)을
+ * scripts/make-icons.py 가 글자 칸으로 쪼개 색 종류만 남긴 것(mascot-ascii.json)을 그린다.
  */
 import MetaPage from "@/components/MetaPage.astro"
 import Layout from "@/layouts/Layout.astro"
-import mascot from "../../mascot.json"
+import mascot from "@/assets/mascot-ascii.json"
 
 const GLYPHS: Record<string, string> = {
-  K: "##", // 몸
-  W: "::", // 배·얼굴
-  E: "@@", // 눈
-  O: "==", // 부리·발
+  K: "#", // 까만 몸
+  W: ":", // 흰 배·눈
+  O: "=", // 부리·발
 }
 
-const art = mascot.pixels
+const art = mascot.rows
   .map((row) =>
     [...row]
-      .map((ch) => (GLYPHS[ch] ? `<i data-c="${ch}">${GLYPHS[ch]}</i>` : "  "))
+      .map((ch) => (GLYPHS[ch] ? `<i data-c="${ch}">${GLYPHS[ch]}</i>` : " "))
       .join(""),
   )
   .join("\n")
@@ -69,8 +67,7 @@ const art = mascot.pixels
      * 실제 핑구처럼 몸은 어둡게, 눈·배는 밝게. 글자색(--foreground)을 그대로 쓰면
      * 다크모드에서 몸이 하얘지고 눈이 어두워져 반전된 그림이 된다.
      */
-    :global(i[data-c="K"]),
-    :global(i[data-c="E"]) {
+    :global(i[data-c="K"]) {
       color: light-dark(#1f1f1f, #6b6b6b);
     }
 

@@ -109,14 +109,16 @@ node scripts/make-thumbs.mjs
 
 ## 마스코트
 
-탭 아이콘·사이드바 로고·링크 공유 미리보기·404 페이지의 펭귄은 전부 `mascot.json`
-(16×16 도트) 하나에서 나온다. 핑구 팬아트다 — 공식 이미지가 아니라 도트로 직접 그렸다.
-핑구는 권리가 살아있는 캐릭터라, 권리자가 내려달라고 하면 `mascot.json` 만 바꾸고
-아래 명령을 다시 돌리면 사이트 전체가 바뀐다.
+탭 아이콘·사이드바 로고·홈 화면 아이콘·링크 공유 미리보기·404 아스키아트는 전부
+`mascot.png`(배경이 투명한 핑구 이미지, 핑구 위키에서 받음) 하나에서 나온다.
+작은 아이콘은 하늘색 동그라미 속 얼굴, 큰 그림은 하늘색 바탕 위 전신이다
+(핑구 몸이 까매서 어두운 배경에 그냥 두면 묻힌다).
+
+핑구는 권리가 살아있는 캐릭터다. 권리자가 내려달라고 하면 `mascot.png` 만 바꾸고
+아래를 다시 돌리면 된다. 얼굴 자르는 위치는 `scripts/make-icons.py` 의 `HEAD_BOX`.
 
 ```bash
-# mascot.json 을 고친 뒤 (Pillow, fontTools 필요)
-python3 scripts/make-icons.py
+python3 scripts/make-icons.py   # Pillow, fontTools 필요
 ```
 
 ## frontmatter
