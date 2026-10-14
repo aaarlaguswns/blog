@@ -18,8 +18,8 @@ export const SITE = {
    * 비밀값이 아니다 — 원래 누구나 볼 수 있는 페이지 머리에 들어가는 값이다.
    */
   verification: {
-    google: "",
-    naver: "",
+    google: "6b0iB7L8OLCOp0EFXK04Knzh5dp0ev4rwmxv6Z2iMMg",
+    naver: "58edbff4c31b0410e771183d2ff90cd3d04c2115",
   },
 } as const
 
