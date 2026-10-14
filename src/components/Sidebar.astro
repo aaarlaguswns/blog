@@ -68,6 +68,20 @@ const section = NAVIGATION.find(
 </aside>
 
 <style>
+  /*
+   * 핑구는 몸이 까매서 어두운 배경에 묻힌다. 어두울 때만 얇은 빛 테두리를 두른다.
+   * 시스템 다크(테마 미지정)와 수동으로 고른 다크 둘 다 잡아야 한다.
+   */
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme="light"])) sidebar-inner > a > :global(svg) {
+      filter: drop-shadow(0 0 0.6px rgb(220 220 220)) drop-shadow(0 0 0.6px rgb(220 220 220));
+    }
+  }
+
+  :global(:root[data-theme="dark"]) sidebar-inner > a > :global(svg) {
+    filter: drop-shadow(0 0 0.6px rgb(220 220 220)) drop-shadow(0 0 0.6px rgb(220 220 220));
+  }
+
   aside {
     position: sticky;
     top: var(--page-offset-top);
@@ -99,8 +113,10 @@ const section = NAVIGATION.find(
       font-size: var(--step-0);
       color: var(--foreground);
       text-decoration-line: none;
+      /* 로고가 24px 이라 가장 좁은 데스크톱 폭에선 이름이 줄바꿈된다. 한 줄로 둔다. */
+      white-space: nowrap;
 
-      /* 16×16 도트 펭귄. 24px(=도트 하나에 1.5px, 레티나에선 정확히 3px)이라야 뭉개지지 않는다 */
+      /* 16×16 도트 핑구. 24px(=도트 하나에 1.5px, 레티나에선 정확히 3px)이라야 뭉개지지 않는다 */
       svg {
         inline-size: 1.5rem;
         block-size: 1.5rem;

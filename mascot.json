@@ -1,28 +1,27 @@
 {
-  "_comment": "블로그 마스코트 펭귄. 아이콘(scripts/make-icons.py)과 404 페이지가 둘 다 이걸 읽는다. 고친 뒤 python3 scripts/make-icons.py",
+  "_comment": "블로그 마스코트(핑구 팬아트, 16×16 도트). 아이콘(scripts/make-icons.py)과 404 페이지가 둘 다 이걸 읽는다. 고친 뒤 python3 scripts/make-icons.py",
   "pixels": [
-    ".......K........",
-    "......KKK.......",
-    "....KKKKKKKK....",
+    "................",
+    ".....KKKKKK.....",
     "...KKKKKKKKKK...",
     "..KKKWWKKWWKKK..",
-    "..KKWWWWWWWWKK..",
-    ".KKWWEWWWWEWWKK.",
-    ".KKWWWWOOWWWWKK.",
-    ".KKWCWOOOOWCWKK.",
-    "KKKKWWWWWWWWKKKK",
+    "..KKWWWKKWWWKK..",
+    "..KKWWEKKEWWKK..",
+    "..KKKWWKKWWKKK..",
+    ".KKKOOOOOOOOKKK.",
+    ".KKOOOOOOOOOOKK.",
+    "KKKKKOOOOOOKKKKK",
     "KKKWWWWWWWWWWKKK",
     ".KKWWWWWWWWWWKK.",
     "..KWWWWWWWWWWK..",
     "..KKWWWWWWWWKK..",
     "...KKKKKKKKKK...",
-    "...OOO....OOO..."
+    "..OOOO....OOOO.."
   ],
   "colors": {
-    "K": "#2b3a55",
+    "K": "#141414",
     "W": "#ffffff",
-    "E": "#111827",
-    "O": "#f59e0b",
-    "C": "#fda4af"
+    "E": "#141414",
+    "O": "#ea580c"
   }
 }
