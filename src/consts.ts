@@ -12,6 +12,15 @@ export const SITE = {
   dir: "ltr",
   defaultPageImage: "/static/og.png",
   defaultPostImage: "/static/og.png",
+  /*
+   * 검색엔진 소유 확인 코드. 구글 서치 콘솔·네이버 서치어드바이저에서 "HTML 태그" 방식을
+   * 고르면 <meta name="..." content="여기 들어갈 값"> 을 준다. content 값만 넣으면 된다.
+   * 비밀값이 아니다 — 원래 누구나 볼 수 있는 페이지 머리에 들어가는 값이다.
+   */
+  verification: {
+    google: "",
+    naver: "",
+  },
 } as const
 
 export const NAVIGATION = [

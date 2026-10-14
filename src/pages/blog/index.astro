@@ -15,7 +15,7 @@ const { roots } = await getCategoryTree()
 ---
 
 <Layout>
-  <MetaPage slot="head" title="글" />
+  <MetaPage slot="head" title="글" description={`전체 글 ${posts.length}개, 최신순. ${roots.map((r) => r.label).join(" · ")}`} />
 
   <page-head>
     <h1>글</h1>

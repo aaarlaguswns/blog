@@ -15,6 +15,20 @@ const ogTitle = title ?? SITE.title
 const fullTitle = title ? pageTitle(title) : SITE.title
 const canonical = new URL(Astro.url.pathname, base)
 const ogImage = new URL(SITE.defaultPageImage, base)
+
+// 홈에만: 이 사이트가 누구의 어떤 블로그인지 검색엔진에 알려준다
+const isHome = Astro.url.pathname === "/" || Astro.url.pathname === ""
+const siteLd = isHome
+  ? {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: SITE.title,
+      description,
+      url: base.href,
+      inLanguage: SITE.locale,
+      author: { "@type": "Person", name: SITE.author, url: base.href },
+    }
+  : null
 ---
 
 <title>{fullTitle}</title>
@@ -36,3 +50,4 @@ const ogImage = new URL(SITE.defaultPageImage, base)
 <meta name="twitter:description" content={description}>
 <meta name="twitter:image" content={ogImage}>
 <meta name="twitter:image:alt" content={ogTitle}>
+{siteLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(siteLd)} />}

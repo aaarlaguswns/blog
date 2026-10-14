@@ -36,3 +36,9 @@ export const SITE_URL = "https://aaarlaguswns.pages.dev"
  */
 export const SOURCE_KEY = "source"
 export const SOURCE_OBSIDIAN = "obsidian"
+
+/**
+ * IndexNow 키. 글이 바뀌면 네이버·빙에 "이 주소 새로 읽어가라" 고 알릴 때 쓴다.
+ * 비밀값이 아니다 — public/e1a13005c1845e7d68a2c94ecbb9e57c.txt 로 누구나 볼 수 있게 올려두는 것이 이 방식의 소유 확인이다.
+ */
+export const INDEXNOW_KEY = "e1a13005c1845e7d68a2c94ecbb9e57c"

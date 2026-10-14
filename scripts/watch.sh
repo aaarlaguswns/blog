@@ -62,7 +62,16 @@ sync_and_publish() {
     return 1
   fi
 
+  local before
+  before="$(git rev-parse HEAD)"
   scripts/publish.sh --content "옵시디언 동기화" </dev/null 2>&1 | while read -r l; do log "  $l"; done
+
+  # 실제로 올라갔으면 네이버·빙에 "새로 읽어가라" 고 알린다 (IndexNow).
+  # 배포가 뜰 때까지 기다려야 해서 뒤에서 돌리고, 감시는 바로 다음 변경을 기다린다.
+  if [[ "$(git rev-parse HEAD)" != "$before" ]]; then
+    ( node scripts/indexnow.mjs --since "$before" --wait </dev/null 2>&1 \
+        | while read -r l; do log "  [indexnow] $l"; done ) &
+  fi
 }
 
 # 시작할 때 한 번 맞춰둔다 (감시가 꺼져 있는 동안 바뀐 것 반영)

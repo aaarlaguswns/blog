@@ -79,6 +79,18 @@ const Content = rendered?.Content
 const categoryCrumbs = (path: string) =>
   trail(path).map((p) => ({ label: categoryLabel(p), href: `/blog/${p}` }))
 
+/*
+ * 분류 페이지의 검색 설명. 사이트 기본 설명을 그대로 쓰면 모든 분류 페이지가 같은
+ * 설명을 갖게 되어 검색엔진이 한 페이지로 묶어버린다. 분류 이름과 글 몇 개를 넣는다.
+ */
+const allPosts = (n: CategoryNode): Post[] => [...n.posts, ...n.children.flatMap(allPosts)]
+const categoryDescription = node
+  ? (() => {
+      const titles = allPosts(node).slice(0, 3).map((p) => p.data.title)
+      return `${node.label} 분류의 글 ${node.total}개${titles.length ? ` — ${titles.join(", ")}${node.total > 3 ? " 외" : ""}` : ""}`
+    })()
+  : undefined
+
 const crumbs = post
   ? [
       ...categoryCrumbs(post.id.split("/").slice(0, -1).join("/")),
@@ -135,7 +147,7 @@ const crumbs = post
     </Layout>
   ) : (
     <Layout crumbs={crumbs} graphFocus={`cat:${node!.path}`}>
-      <MetaPage slot="head" title={node!.label} />
+      <MetaPage slot="head" title={node!.label} description={categoryDescription} />
       <ScrollToTop floating />
       <category-head>
         <h1>{node!.label}</h1>

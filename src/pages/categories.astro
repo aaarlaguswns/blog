@@ -24,7 +24,7 @@ const accentOf = (path: string) => {
 ---
 
 <Layout crumbs={[{ label: "분류", href: "/categories" }]}>
-  <MetaPage slot="head" title="분류" />
+  <MetaPage slot="head" title="분류" description={`글 ${posts.length}개를 담은 ${roots.length}개 분류: ${roots.map((r) => `${r.label}(${r.total})`).join(", ")}`} />
 
   <page-head>
     <h1>분류</h1>

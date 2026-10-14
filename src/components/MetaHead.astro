@@ -39,6 +39,13 @@ import { SITE } from "@/consts"
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
 
+  {SITE.verification.google && (
+      <meta name="google-site-verification" content={SITE.verification.google} />
+    )}
+  {SITE.verification.naver && (
+      <meta name="naver-site-verification" content={SITE.verification.naver} />
+    )}
+
   <link rel="sitemap" href="/sitemap-index.xml">
   <link
     rel="alternate"

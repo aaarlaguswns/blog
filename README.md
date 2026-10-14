@@ -94,6 +94,19 @@ node scripts/make-thumbs.mjs
   데이터는 빌드 때 `src/pages/graph.json.ts` 가 만든다. 글·분류·태그가 점이고,
   글끼리의 링크, 글→분류, 글→태그(점선)가 선이다. 좁은 화면에서는 보이지 않는다.
 
+## 검색 노출
+
+| 무엇 | 어디서 |
+| --- | --- |
+| 사이트맵 (글·분류마다 수정일) | `/sitemap-index.xml` — `astro.config.ts` |
+| RSS | `/rss.xml` |
+| 페이지마다 다른 검색 설명 | 짧은 요약은 제목·분류를 붙여 늘린다 — `MetaPost.astro` |
+| 구조화 데이터 (글 정보·경로·사이트 정보) | `MetaPost.astro`, `MetaPage.astro` |
+| 구글·네이버 소유 확인 태그 | `src/consts.ts` 의 `SITE.verification` 에 코드만 넣는다 |
+| IndexNow (네이버·빙에 새 글 알림) | 감시 데몬이 발행 직후 자동으로. 수동: `node scripts/indexnow.mjs --all` |
+
+구글은 IndexNow 를 쓰지 않는다. 구글 서치 콘솔에 사이트맵을 한 번 등록해두면 거기서 알아서 읽는다.
+
 ## 마스코트
 
 탭 아이콘·사이드바 로고·링크 공유 미리보기·404 페이지의 펭귄은 전부 `mascot.json`
