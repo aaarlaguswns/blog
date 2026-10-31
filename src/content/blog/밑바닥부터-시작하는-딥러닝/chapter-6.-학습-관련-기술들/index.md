@@ -1,5 +1,5 @@
 ---
-title: 밑바닥부터 시작하는 딥러닝 - Chapter 6. 학습 관련 기술들
+title: Chapter 6. 학습 관련 기술들
 description: 과제
 date: 2026-10-14T08:49:45.058Z
 tags:

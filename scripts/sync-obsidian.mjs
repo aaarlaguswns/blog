@@ -72,7 +72,9 @@ async function main() {
   // 첨부 인덱스: 파일명 → 실제 경로. 같은 이름이 여럿이면 먼저 찾은 것을 쓴다.
   const assetIndex = new Map()
   for (const a of attachments) {
-    const name = basename(a)
+    // 맥 파일 시스템은 한글 파일명을 자모 분리(NFD)로 줄 때가 있고, 노트 본문은 보통 NFC 다.
+    // 같은 이름인데 서로 다른 글자로 비교돼 못 찾는 일이 없도록 한쪽으로 맞춘다.
+    const name = basename(a).normalize("NFC")
     if (!assetIndex.has(name)) assetIndex.set(name, a)
   }
 
@@ -93,6 +95,23 @@ async function main() {
   }
 
   const seen = new Set()
+
+  /*
+   * 폴더 이름을 바꾸면 글의 주소가 바뀌어서, 같은 주소의 이전 글에서 날짜를 이어받을 수 없다.
+   * (2026-10-31 "Deep Learning" → "밑바닥부터 시작하는 딥러닝" 으로 바꿨을 때 Chapter 2~6 의
+   * 날짜가 전부 그날로 바뀌었다.) 그래서 기존 글들의 날짜를 제목·파일이름으로도 찾아둔다.
+   * 지워질 옛 글은 이 동기화가 끝날 때 지워지므로 지금은 아직 남아 있다.
+   */
+  const datesByTitle = new Map()
+  const datesByName = new Map()
+  for (const dir of await listPostDirs()) {
+    const content = readIfExists(join(POSTS_DIR, dir, "index.md"))
+    if (!content) continue
+    const { data } = parseFrontmatter(content)
+    if (data[SOURCE_KEY] !== SOURCE_OBSIDIAN || !data.date) continue
+    if (data.title) datesByTitle.set(String(data.title), data.date)
+    datesByName.set(dir.split("/").at(-1), data.date)
+  }
 
   for (const note of notes) {
     const noteName = basename(note, ".md")
@@ -127,7 +146,8 @@ async function main() {
       const converted = convertBody(rawBody, {
         resolveLink: (name) => linkIndex.get(name) ?? null,
         resolveAsset: (name) => {
-          const src = assetIndex.get(name) ?? assetIndex.get(basename(name))
+          const key = name.normalize("NFC")
+          const src = assetIndex.get(key) ?? assetIndex.get(basename(key))
           if (!src) return null
           usedAssets.set(src, `./assets/${basename(src)}`)
           return `./assets/${basename(src)}`
@@ -138,9 +158,12 @@ async function main() {
 
       // 날짜가 원본에 없으면, 이미 발행된 글의 날짜를 유지한다.
       // 그러지 않으면 저장할 때마다 날짜가 바뀌어 매번 커밋이 생긴다.
-      const priorDate = previous
-        ? parseFrontmatter(previous).data.date
-        : null
+      // 같은 주소에 없으면(폴더 이름을 바꾼 경우) 같은 제목·파일이름의 기존 글에서 찾는다.
+      const priorDate =
+        (previous ? parseFrontmatter(previous).data.date : null) ??
+        datesByTitle.get(String(fm.title ?? noteName)) ??
+        datesByName.get(nameSlug) ??
+        null
       const fallbackDate = priorDate
         ? new Date(priorDate)
         : statSync(note).mtime

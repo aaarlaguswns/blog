@@ -81,7 +81,7 @@ const scenes = {
     ].join(""),
 
   // 층층이 이어진 신경망: 딥러닝
-  "deep-learning": (ink, soft) => {
+  "밑바닥부터-시작하는-딥러닝": (ink, soft) => {
     const layers = [[118, 168, 218], [96, 146, 196, 246], [138, 198]]
     const xs = [216, 320, 424]
     const out = []
