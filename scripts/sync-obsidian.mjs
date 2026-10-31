@@ -11,10 +11,10 @@
  *  · frontmatter 에 `publish: true` 가 없으면 draft 로 넘어간다 → 사이트에 안 뜬다.
  *  · 내용이 실제로 달라졌을 때만 파일을 쓴다 (쓸데없는 커밋·재빌드 방지).
  *  · 볼트에서 사라진 글은 지우되, 볼트에서 온 글(source: obsidian)만 지운다.
- *  · PDF 는 두 갈래다. 노트가 임베드한 PDF 는 그 노트 안에 펼쳐지고,
- *    아무 노트도 임베드하지 않은 PDF 는 그 자체로 글 하나가 된다(바로 공개).
- *    이름이 _ 로 시작하는 PDF 와 assets/ 폴더 안의 PDF 는 따로 글이 되지 않는다.
- *  · 공개되는 글의 원본 PDF 는 public/files/<글 주소>/ 로 복사된다. 이 폴더는 이 스크립트가 관리한다.
+ *  · PDF 는 노트가 임베드하면 그 자리에 쪽 그림으로 펼쳐진다.
+ *    아무 노트도 임베드하지 않은 PDF 에는 같은 이름의 노트를 볼트에 만들어 준다(이 스크립트가
+ *    볼트에 쓰는 유일한 경우). 제목·요약·공개 여부는 그 노트에서 고친다.
+ *    이름이 _ 로 시작하는 PDF 와 assets/ 폴더 안의 PDF 는 건드리지 않는다.
  */
 
 import {
@@ -23,7 +23,6 @@ import {
 import { readdir } from "node:fs/promises"
 import { basename, dirname, extname, join, relative, sep } from "node:path"
 import {
-  BLOG_ROOT,
   POSTS_DIR,
   VAULT_BLOG_DIR,
   SOURCE_KEY,
@@ -47,9 +46,6 @@ const JSON_OUT = args.has("--json")
 const IMAGE_EXT = new Set([
   ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".svg",
 ])
-
-/** 공개되는 원본 PDF 가 놓이는 곳. 사이트에서는 /files/... */
-const FILES_DIR = join(BLOG_ROOT, "public", "files")
 
 /* ── 파일 훑기 ───────────────────────────────────────────────────────── */
 
@@ -96,20 +92,9 @@ async function main() {
     if (!pdfIndex.has(name)) pdfIndex.set(name, p)
   }
 
-  // 링크 인덱스: 노트 이름 → 사이트 경로. 위키링크 해석에 쓴다.
-  const linkIndex = new Map()
-  for (const n of notes) {
-    const name = basename(n, ".md")
-    const cat = relative(VAULT_BLOG_DIR, dirname(n))
-      .split(sep).filter(Boolean).map(slugify).filter(Boolean).join("/")
-    const nameSlug = slugify(name)
-    if (!nameSlug) continue
-    linkIndex.set(name, `/blog/${cat ? `${cat}/${nameSlug}` : nameSlug}`)
-  }
-
   const report = {
     created: [], updated: [], unchanged: [], removed: [],
-    drafts: [], files: [], warnings: [], errors: [],
+    drafts: [], notesMade: [], assets: [], warnings: [], errors: [],
   }
 
   // 그림으로 구워둔 PDF. 본문 변환은 동기라 미리 다 그려둔다.
@@ -121,10 +106,7 @@ async function main() {
       report.errors.push(`PDF 를 못 그림: ${relative(VAULT_BLOG_DIR, p)} — ${err.message}`)
     }
   }
-  const embeddedPdfs = new Set()
-  const publicFiles = new Map() // public/files 안 경로 → 원본
 
-  const seen = new Set()
 
   /*
    * 폴더 이름을 바꾸면 글의 주소가 바뀌어서, 같은 주소의 이전 글에서 날짜를 이어받을 수 없다.
@@ -142,6 +124,56 @@ async function main() {
     if (data.title) datesByTitle.set(String(data.title), data.date)
     datesByName.set(dir.split("/").at(-1), data.date)
   }
+
+  /*
+   * 노트에 임베드되지 않은 PDF 에는 같은 이름의 노트를 만들어 준다.
+   * PDF 에는 제목·요약·publish 를 적을 곳이 없어서, 그 노트가 곧 PDF 의 글이 된다.
+   * 처음 내용은 PDF 에서 뽑고, 그 다음부터는 사람이 옵시디언에서 고친다.
+   * 임베드 여부는 노트 본문에 PDF 파일 이름이 나오는지로 본다.
+   */
+  const noteTexts = notes.map((n) => readFileSync(n, "utf8").normalize("NFC"))
+  for (const pdfPath of pdfs) {
+    const pdf = rendered.get(pdfPath)
+    const rel = relative(VAULT_BLOG_DIR, pdfPath)
+    if (!pdf || rel.split(sep).includes("assets")) continue
+    const fileName = basename(pdfPath).normalize("NFC")
+    if (noteTexts.some((t) => t.includes(fileName) || t.includes(encodeURI(fileName)))) continue
+
+    const name = basename(pdfPath, extname(pdfPath))
+    const notePath = join(dirname(pdfPath), `${name}.md`)
+    if (existsSync(notePath)) {
+      report.warnings.push(`${rel}: 같은 이름의 노트가 PDF 를 임베드하지 않아 안 보임 — 노트에 ![[${fileName}]] 를 넣을 것`)
+      continue
+    }
+    const prior = datesByTitle.get(name) ?? datesByName.get(slugify(name))
+    const date = new Date(prior ?? statSync(pdfPath).birthtime)
+    const note = stringifyFrontmatter(
+      {
+        title: name,
+        description: pdfDescription(pdf.pages, name) ?? `${name} (PDF ${pdf.pages.length}쪽)`,
+        date: date.toLocaleDateString("sv-SE"), // 2026-10-31
+        publish: true, // PDF 를 Blog/ 에 넣은 것 자체가 올려달라는 뜻이다
+      },
+      `![[${fileName}]]`,
+    )
+    report.notesMade.push(relative(VAULT_BLOG_DIR, notePath))
+    if (DRY) continue
+    writeFileSync(notePath, note, "utf8")
+    notes.push(notePath)
+  }
+
+  // 링크 인덱스: 노트 이름 → 사이트 경로. 위키링크 해석에 쓴다.
+  const linkIndex = new Map()
+  for (const n of notes) {
+    const name = basename(n, ".md")
+    const cat = relative(VAULT_BLOG_DIR, dirname(n))
+      .split(sep).filter(Boolean).map(slugify).filter(Boolean).join("/")
+    const nameSlug = slugify(name)
+    if (!nameSlug) continue
+    linkIndex.set(name, `/blog/${cat ? `${cat}/${nameSlug}` : nameSlug}`)
+  }
+
+  const seen = new Set()
 
   for (const note of notes) {
     const noteName = basename(note, ".md")
@@ -169,7 +201,17 @@ async function main() {
     try {
       const raw = readFileSync(note, "utf8")
       const { data: fm, body: rawBody } = parseFrontmatter(raw)
-      const published = fm.publish === true
+
+      /*
+       * 본문이 PDF 임베드로 시작하고 대표 그림(image)이 따로 없으면, 그 PDF 의 첫 쪽을
+       * 대표 그림으로 쓴다. 목록 카드·링크 미리보기에 뜨고 글머리에도 크게 뜨므로
+       * 본문의 그 PDF 는 둘째 쪽부터 싣는다.
+       */
+      const lead = rawBody
+        .trimStart()
+        .match(/^!\[\[([^\]|#]+?\.pdf)|^!\[[^\]]*\]\(\s*<?([^)>]+?\.pdf)>?\s*\)/i)
+      let coverName = !fm.image && lead ? pdfKey(lead[1] ?? lead[2]) : null
+      let cover = null
 
       const usedAssets = new Map() // 원본경로 → 글 폴더 안 상대경로
       const converted = convertBody(rawBody, {
@@ -178,15 +220,17 @@ async function main() {
           const src = pdfIndex.get(key) ?? pdfIndex.get(basename(key))
           const pdf = src && rendered.get(src)
           if (!pdf) return null
-          embeddedPdfs.add(src)
           // 한 글에 PDF 가 여럿일 수 있으니 쪽 그림 이름 앞에 PDF 이름을 붙인다
           const stem = slugify(basename(src, extname(src)))
           const pageRel = (i) => `./assets/${stem}-${pdf.pages[i].file}`
           pdf.pages.forEach((p, i) => usedAssets.set(join(pdf.dir, p.file), pageRel(i)))
-          // 초안의 PDF 까지 공개 폴더에 두면 글보다 먼저 새어 나간다
-          const href = `/files/${slug}/${basename(src)}`
-          if (published) publicFiles.set(href.slice("/files/".length), src)
-          return pdfMarkdown({ href, pages: pdf.pages, pageSrc: pageRel, bytes: pdf.bytes })
+          let from = 0
+          if (coverName && pdfKey(name) === coverName) {
+            cover = pageRel(0)
+            coverName = null
+            from = 1
+          }
+          return pdfMarkdown({ pages: pdf.pages, pageSrc: pageRel, from })
         },
         resolveLink: (name) => linkIndex.get(name) ?? null,
         resolveAsset: (name) => {
@@ -216,7 +260,9 @@ async function main() {
       })
 
       // 안전장치: publish: true 를 명시하지 않으면 초안이다.
+      const published = fm.publish === true
       const data = { ...norm.data, [SOURCE_KEY]: SOURCE_OBSIDIAN }
+      if (cover) data.image = cover
       if (!published) {
         data.draft = true
         report.drafts.push(slug)
@@ -240,64 +286,6 @@ async function main() {
     }
   }
 
-  /*
-   * 아무 노트도 임베드하지 않은 PDF 는 그 자체로 글이 된다.
-   *   Blog/밑바닥부터 시작하는 딥러닝/발표.pdf → /blog/밑바닥부터-시작하는-딥러닝/발표
-   * PDF 에는 frontmatter 를 쓸 수 없어서 공개 스위치가 없다. 볼트의 Blog/ 에 넣는 것이 곧 발행이다.
-   * 요약·날짜·태그를 직접 정하고 싶으면 노트를 하나 만들어 PDF 를 임베드하면 된다.
-   */
-  for (const pdfPath of pdfs) {
-    const pdf = rendered.get(pdfPath)
-    if (!pdf || embeddedPdfs.has(pdfPath)) continue
-    const rel = relative(VAULT_BLOG_DIR, pdfPath)
-    if (rel.split(sep).includes("assets")) continue // 노트에 붙이려던 첨부. 임베드가 빠졌을 뿐이다
-
-    const name = basename(pdfPath, extname(pdfPath))
-    const categoryPath = rel.split(sep).slice(0, -1).map(slugify).filter(Boolean).join("/")
-    const nameSlug = slugify(name)
-    const slug = categoryPath ? `${categoryPath}/${nameSlug}` : nameSlug
-    if (!nameSlug) {
-      report.errors.push(`슬러그를 만들 수 없는 파일명: ${basename(pdfPath)}`)
-      continue
-    }
-    if (seen.has(slug)) {
-      report.warnings.push(`${slug}: 같은 이름의 노트가 있어 PDF 를 따로 글로 만들지 않음 — 노트에 임베드하면 보인다`)
-      continue
-    }
-    seen.add(slug)
-
-    try {
-      const previous = readIfExists(join(POSTS_DIR, slug, "index.md"))
-      const priorDate =
-        (previous ? parseFrontmatter(previous).data.date : null) ??
-        datesByTitle.get(name) ??
-        datesByName.get(nameSlug) ??
-        null
-      const pageRel = (i) => `./assets/${pdf.pages[i].file}`
-      const href = `/files/${slug}/${basename(pdfPath)}`
-      // 첫 쪽은 대표 그림(image)으로 글머리에 이미 뜨니 본문은 둘째 쪽부터
-      const body = pdfMarkdown({ href, pages: pdf.pages, pageSrc: pageRel, bytes: pdf.bytes, from: 1 })
-      const { data } = normalizeFrontmatter(
-        {
-          title: name,
-          description: pdfDescription(pdf.pages, name) ?? `${name} (PDF ${pdf.pages.length}쪽)`,
-        },
-        body,
-        { date: priorDate ? new Date(priorDate) : statSync(pdfPath).birthtime },
-      )
-      // 첫 쪽을 대표 그림으로 — 목록 카드와 링크 공유 미리보기에 뜬다
-      data.image = pageRel(0)
-      data[SOURCE_KEY] = SOURCE_OBSIDIAN
-
-      const assets = new Map(pdf.pages.map((p, i) => [join(pdf.dir, p.file), pageRel(i)]))
-      publicFiles.set(href.slice("/files/".length), pdfPath)
-      writePost(report, slug, previous, stringifyFrontmatter(data, body), assets)
-    } catch (err) {
-      report.errors.push(`${slug}: ${err.message}`)
-    }
-  }
-
-  syncPublicFiles(report, publicFiles)
 
   // 볼트에서 사라진 글 치우기 — 출처가 옵시디언인 것만.
   for (const dir of await listPostDirs()) {
@@ -317,7 +305,10 @@ async function main() {
 
 /* ── 보조 ────────────────────────────────────────────────────────────── */
 
-/** 내용이 달라졌을 때만 글을 쓰고, 쓰인 첨부를 글 폴더로 복사한다. */
+/**
+ * 내용이 달라졌을 때만 글을 쓰고, 쓰인 첨부를 글 폴더로 복사한다.
+ * 글은 그대로인데 그림만 바뀐 경우에도 배포되도록 복사한 첨부를 report.assets 에 남긴다.
+ */
 function writePost(report, slug, previous, next, assets) {
   const outDir = join(POSTS_DIR, slug)
   if (previous === next) {
@@ -329,50 +320,36 @@ function writePost(report, slug, previous, next, assets) {
       writeFileSync(join(outDir, "index.md"), next, "utf8")
     }
   }
-  if (DRY) return
+  const wanted = new Set()
   for (const [src, rel] of assets) {
     const dest = join(outDir, rel.replace(/^\.\//, ""))
-    mkdirSync(dirname(dest), { recursive: true })
-    if (!sameFile(src, dest)) copyFileSync(src, dest)
-  }
-}
-
-/**
- * public/files 를 이번에 공개할 PDF 들과 똑같이 맞춘다.
- * 글은 그대로인데 PDF 만 바뀐 경우에도 배포가 되도록 바뀐 파일을 report.files 에 남긴다.
- */
-function syncPublicFiles(report, wanted) {
-  for (const [rel, src] of wanted) {
-    const dest = join(FILES_DIR, rel)
+    wanted.add(dest)
     if (sameFile(src, dest)) continue
-    report.files.push(rel)
+    report.assets.push(`${slug}/${rel.slice(2)}`)
     if (DRY) continue
     mkdirSync(dirname(dest), { recursive: true })
     copyFileSync(src, dest)
   }
-  const prune = (dir) => {
-    let entries
-    try {
-      entries = readdirSync(dir, { withFileTypes: true })
-    } catch {
-      return
-    }
-    for (const e of entries) {
-      const full = join(dir, e.name)
-      if (e.isDirectory()) {
-        prune(full)
-        continue
-      }
-      const rel = relative(FILES_DIR, full).split(sep).join("/")
-      if (wanted.has(rel) || e.name === ".DS_Store") continue
-      report.files.push(`${rel} (지움)`)
-      if (!DRY) rmSync(full)
-    }
-    if (!DRY && dir !== FILES_DIR && readdirSync(dir).every((n) => n === ".DS_Store")) {
-      rmSync(dir, { recursive: true })
-    }
+  // PDF 가 바뀌어 쪽 수가 줄었거나 이름이 바뀌면 옛 쪽 그림이 남는다. 그것만 치운다.
+  const assetDir = join(outDir, "assets")
+  if (!existsSync(assetDir)) return
+  for (const f of readdirSync(assetDir)) {
+    const full = join(assetDir, f)
+    if (!/(?:^|-)page-\d+\.webp$/.test(f) || wanted.has(full)) continue
+    report.assets.push(`${slug}/assets/${f} (지움)`)
+    if (!DRY) rmSync(full)
   }
-  prune(FILES_DIR)
+}
+
+/** 임베드에 적힌 PDF 이름을 비교할 수 있게: %20 풀고, 경로 떼고, 한글 조합 맞추기 */
+function pdfKey(name) {
+  let n = name.trim()
+  try {
+    n = decodeURIComponent(n)
+  } catch {
+    /* 그대로 쓴다 */
+  }
+  return basename(n).normalize("NFC")
 }
 
 function readIfExists(path) {
@@ -413,7 +390,7 @@ async function listPostDirs(base = POSTS_DIR, prefix = "") {
 
 function print(r) {
   if (JSON_OUT) {
-    const changed = r.created.length + r.updated.length + r.removed.length + r.files.length
+    const changed = r.created.length + r.updated.length + r.removed.length + r.assets.length
     console.log(JSON.stringify({ ...r, changed }))
     return
   }
@@ -428,7 +405,8 @@ function print(r) {
     line("그대로", r.unchanged),
     line("지운 글", r.removed),
     line("초안(publish: true 없음)", r.drafts),
-    line("공개 PDF", r.files),
+    line("PDF 에 붙여 만든 노트", r.notesMade),
+    r.assets.length ? `  바뀐 첨부 ${r.assets.length}개` : null,
   ]) if (l) console.log(l)
 
   if (r.warnings.length) {
@@ -439,7 +417,7 @@ function print(r) {
     console.log("  오류:")
     for (const e of r.errors) console.log(`   ✗ ${e}`)
   }
-  if (!r.created.length && !r.updated.length && !r.removed.length && !r.files.length) {
+  if (!r.created.length && !r.updated.length && !r.removed.length && !r.assets.length) {
     console.log("  바뀐 것 없음")
   }
 }

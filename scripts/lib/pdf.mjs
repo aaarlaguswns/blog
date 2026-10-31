@@ -2,8 +2,8 @@
  * PDF → 쪽마다 이미지 + 쪽마다 글자.
  *
  * 브라우저에 PDF 를 그대로 띄우는 방법(<iframe>, <object>)은 안드로이드 크롬에서 아예 안 보이고
- * 아이폰에서는 첫 쪽만 보인다. 그래서 동기화할 때 쪽마다 그림으로 구워 글에 넣고,
- * 원본 PDF 는 받기 링크로 따로 둔다. 쪽에서 뽑은 글자는 그림 설명(alt)이 되어
+ * 아이폰에서는 첫 쪽만 보인다. 그래서 동기화할 때 쪽마다 그림으로 구워 글에 넣는다.
+ * 원본 PDF 파일은 사이트에 올리지 않는다. 쪽에서 뽑은 글자는 그림 설명(alt)이 되어
  * 화면낭독기와 검색엔진이 읽는다.
  *
  * 그리는 데 쪽당 0.1~0.3초가 걸려서, 내용 해시로 .cache/pdf/ 에 구워둔 것을 다시 쓴다.
@@ -22,7 +22,7 @@ const PAGE_WIDTH = 1600
 
 /**
  * @param {string} file  PDF 경로
- * @returns {Promise<{ dir: string, pages: { file: string, text: string }[], title: string|null, bytes: number }>}
+ * @returns {Promise<{ dir: string, pages: { file: string, text: string }[], title: string|null }>}
  *   dir 안에 page-01.webp … 가 있다.
  */
 export async function renderPdf(file) {
@@ -32,7 +32,7 @@ export async function renderPdf(file) {
   const metaFile = join(dir, "meta.json")
 
   if (existsSync(metaFile)) {
-    return { dir, ...JSON.parse(readFileSync(metaFile, "utf8")), bytes: data.length }
+    return { dir, ...JSON.parse(readFileSync(metaFile, "utf8")) }
   }
 
   // 무거운 모듈이라 PDF 가 있을 때만 불러온다
@@ -67,7 +67,7 @@ export async function renderPdf(file) {
 
   const meta = { pages, title }
   writeFileSync(metaFile, JSON.stringify(meta, null, 2))
-  return { dir, ...meta, bytes: data.length }
+  return { dir, ...meta }
 }
 
 /** 아이콘 글꼴 자리(사용자 영역 글자)와 줄바꿈을 걷어내고 한 줄로 */
@@ -79,20 +79,15 @@ function tidy(s) {
 }
 
 /**
- * 글 본문에 들어갈 마크다운.
+ * 글 본문에 들어갈 마크다운. 쪽 그림을 차례로 싣는다.
  *
  * @param {object} o
- * @param {string} o.href        원본 PDF 받는 주소 (사이트 절대경로)
  * @param {{ text: string }[]} o.pages
  * @param {(i:number)=>string} o.pageSrc  i번째 쪽 그림의 글 폴더 기준 상대경로
- * @param {number} o.bytes
  * @param {number} [o.from]     이 쪽부터 싣는다 (0부터). 첫 쪽이 이미 대표 그림으로 위에 떠 있으면 1
  */
-export function pdfMarkdown({ href, pages, pageSrc, bytes, from = 0 }) {
-  const size = bytes >= 1024 * 1024
-    ? `${(bytes / 1024 / 1024).toFixed(1)}MB`
-    : `${Math.max(1, Math.round(bytes / 1024))}KB`
-  const lines = [`[PDF 원본 받기 · ${pages.length}쪽 · ${size}](${encodeURI(href)})`, ""]
+export function pdfMarkdown({ pages, pageSrc, from = 0 }) {
+  const lines = []
   pages.forEach((p, i) => {
     if (i < from) return
     // 설명이 너무 길면 화면낭독기가 지루하다. 대괄호는 마크다운 문법과 부딪힌다.
