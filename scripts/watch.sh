@@ -96,7 +96,7 @@ rm -f "$MARKER"
 fswatch -0 -r --latency 2 -e '/\.' "$VAULT" \
   | while IFS= read -r -d "" path; do
       case "$path" in
-        *.md|*.png|*.jpg|*.jpeg|*.gif|*.webp|*.avif|*.svg) touch "$MARKER" ;;
+        *.md|*.pdf|*.png|*.jpg|*.jpeg|*.gif|*.webp|*.avif|*.svg) touch "$MARKER" ;;
       esac
     done &
 WATCHER_PID=$!
