@@ -33,6 +33,7 @@
     "@astrojs/check": "^0.9.10",
     "@biomejs/biome": "^2.5.1",
     "@types/d3-force": "^3.0.10",
+    "pdfjs-dist": "^6.4.299",
     "typescript": "^6.0.3"
   }
 }
